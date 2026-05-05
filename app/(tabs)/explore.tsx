@@ -1,112 +1,3770 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+﻿import { Ionicons } from '@expo/vector-icons';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
+import * as Location from 'expo-location';
+
+import { router } from 'expo-router';
+
+import { useEffect, useRef, useState } from 'react';
+
+import { Dimensions, ImageBackground, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+import Animated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+
+import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel';
+
+
+
+import HeadLogo from '@/assets/images/head.svg';
+
+import BoardingPassModal from '@/src/components/BoardingPassModal';
+
+import { StaggeredFadeIn } from '@/src/components/StaggeredFadeIn';
+
+import TextType from '@/src/components/TextType';
+
+import { useLanguage } from '@/src/context/LanguageContext';
+
+import { useTravel, type Trip } from '@/src/context/TravelContext';
+
+import { ranaColors, ranaRadius, ranaShadow, ranaSpacing } from '@/src/theme/ranaTheme';
+
+
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+const CARD_WIDTH = SCREEN_WIDTH - ranaSpacing.md * 2;
+
+const CAROUSEL_CARD_W = SCREEN_WIDTH - ranaSpacing.md * 2;
+
+const UPCOMING_CAROUSEL_ITEM_W = SCREEN_WIDTH - ranaSpacing.md * 2 - 28;
+
+const UPCOMING_SNAP_FEEL: 'tight' | 'loose' = 'tight';
+
+const UPCOMING_SCROLL_ANIMATION_MS = UPCOMING_SNAP_FEEL === 'tight' ? 320 : 680;
+
+
+
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Destination data ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+interface Destination {
+
+  id: string;
+
+  name: string;
+
+  location: string;
+
+  description: string;
+
+  bestMonths: string;
+
+  tag: string;
+
+  tagColor: string;
+
+  // Unsplash source ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â free to use, loads over the network
+
+  imageUri: string;
+
+  transport: string;
+
+  estimatedBudget: string;
+
 }
 
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+
+
+const DESTINATIONS: Destination[] = [
+
+  // ðŸ–ï¸ Beach
+
+  {
+
+    id: '1',
+
+    name: 'Bora Bora',
+
+    location: 'French Polynesia',
+
+    description:
+
+      'Iconic overwater bungalows, crystal-clear lagoons, and lush volcanic peaks. A luxury-heavy destination where even budget options feel premium.',
+
+    bestMonths: 'May â€“ Oct',
+
+    tag: 'Beach',
+
+    tagColor: '#4A90E2',
+
+    imageUri: 'https://images.unsplash.com/photo-1501615965209-5deb4f44c8a4?w=800&q=80',
+
+    transport: 'Flight',
+
+    estimatedBudget: '$300 â€“ $1,000+ / day',
+
   },
-  titleContainer: {
+
+  {
+
+    id: '2',
+
+    name: 'Maldives',
+
+    location: 'South Asia',
+
+    description:
+
+      'Turquoise atolls, coral reefs, and private island resorts. Wide range from affordable local islands to ultra-luxury overwater villas.',
+
+    bestMonths: 'Nov â€“ Apr',
+
+    tag: 'Beach',
+
+    tagColor: '#4A90E2',
+
+    imageUri: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&q=80',
+
+    transport: 'Flight + Speedboat',
+
+    estimatedBudget: '$150 â€“ $800 / day',
+
+  },
+
+  // ðŸŒ¿ Nature
+
+  {
+
+    id: '3',
+
+    name: 'Banff National Park',
+
+    location: 'Alberta, Canada',
+
+    description:
+
+      'Emerald lakes, glaciers, and the Canadian Rockies. World-class hiking and skiing with costs covering lodging, food, and park fees.',
+
+    bestMonths: 'Jun â€“ Sep',
+
+    tag: 'Nature',
+
+    tagColor: '#1F9D74',
+
+    imageUri: 'https://images.unsplash.com/photo-1609881543302-1bef3d0f19e6?w=800&q=80',
+
+    transport: 'Car / Bus',
+
+    estimatedBudget: '$100 â€“ $300 / day',
+
+  },
+
+  {
+
+    id: '4',
+
+    name: 'Amazon Rainforest',
+
+    location: 'Brazil / Peru',
+
+    description:
+
+      'The lungs of the Earth. Guided jungle tours, wildlife spotting, and river expeditions â€” mostly bundled packages that simplify budgeting.',
+
+    bestMonths: 'Jun â€“ Nov',
+
+    tag: 'Nature',
+
+    tagColor: '#1F9D74',
+
+    imageUri: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=800&q=80',
+
+    transport: 'Flight + Boat',
+
+    estimatedBudget: '$150 â€“ $400 / day',
+
+  },
+
+  // ðŸ›ï¸ History
+
+  {
+
+    id: '5',
+
+    name: 'Rome',
+
+    location: 'Italy',
+
+    description:
+
+      'The Eternal City â€” the Colosseum, Vatican, and centuries of history on every street. Flexible budget from hostels to boutique hotels.',
+
+    bestMonths: 'Apr â€“ Jun, Sep â€“ Oct',
+
+    tag: 'History',
+
+    tagColor: '#7B5EA7',
+
+    imageUri: 'https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=800&q=80',
+
+    transport: 'Flight + Metro',
+
+    estimatedBudget: '$80 â€“ $250 / day',
+
+  },
+
+  {
+
+    id: '6',
+
+    name: 'Machu Picchu',
+
+    location: 'Cusco, Peru',
+
+    description:
+
+      'The lost Incan citadel perched high in the Andes. Tours, entrance permits, and transport are included in most packages.',
+
+    bestMonths: 'May â€“ Oct',
+
+    tag: 'History',
+
+    tagColor: '#7B5EA7',
+
+    imageUri: 'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=800&q=80',
+
+    transport: 'Flight + Train',
+
+    estimatedBudget: '$100 â€“ $300 / day',
+
+  },
+
+  // ðŸ§— Adventure
+
+  {
+
+    id: '7',
+
+    name: 'Queenstown',
+
+    location: 'New Zealand',
+
+    description:
+
+      'The adventure capital of the world â€” bungee jumping, skydiving, jet boating, and skiing. Activities are the main cost driver here.',
+
+    bestMonths: 'Dec â€“ Feb, Jun â€“ Aug',
+
+    tag: 'Adventure',
+
+    tagColor: '#D0534A',
+
+    imageUri: 'https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=800&q=80',
+
+    transport: 'Flight + Car',
+
+    estimatedBudget: '$120 â€“ $350 / day',
+
+  },
+
+  {
+
+    id: '8',
+
+    name: 'Patagonia',
+
+    location: 'Argentina / Chile',
+
+    description:
+
+      'Dramatic glaciers, jagged peaks, and untouched wilderness at the tip of South America. Self-guided hiking keeps costs manageable.',
+
+    bestMonths: 'Nov â€“ Mar',
+
+    tag: 'Adventure',
+
+    tagColor: '#D0534A',
+
+    imageUri: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80',
+
+    transport: 'Flight + Bus',
+
+    estimatedBudget: '$80 â€“ $250 / day',
+
+  },
+
+  // ðŸ—¼ Landmark
+
+  {
+
+    id: '9',
+
+    name: 'Eiffel Tower',
+
+    location: 'Paris, France',
+
+    description:
+
+      'The iron lady of Paris and one of the world\'s most recognizable landmarks. Accommodation is the primary expense in the City of Light.',
+
+    bestMonths: 'Apr â€“ Jun, Sep â€“ Nov',
+
+    tag: 'Landmark',
+
+    tagColor: '#E39A2D',
+
+    imageUri: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=800&q=80',
+
+    transport: 'Flight + Metro',
+
+    estimatedBudget: '$120 â€“ $300 / day',
+
+  },
+
+  {
+
+    id: '10',
+
+    name: 'Great Wall of China',
+
+    location: 'Beijing, China',
+
+    description:
+
+      'Stretching over 13,000 miles, the Great Wall is one of history\'s greatest engineering feats â€” and one of the most budget-friendly major landmarks.',
+
+    bestMonths: 'Apr â€“ May, Sep â€“ Oct',
+
+    tag: 'Landmark',
+
+    tagColor: '#E39A2D',
+
+    imageUri: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800&q=80',
+
+    transport: 'Flight + Bus',
+
+    estimatedBudget: '$50 â€“ $150 / day',
+
+  },
+
+];
+
+
+
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Helpers ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+function formatPHP(value: number) {
+
+  return new Intl.NumberFormat('en-PH', {
+
+    style: 'currency',
+
+    currency: 'PHP',
+
+    maximumFractionDigits: 0,
+
+  }).format(value);
+
+}
+
+
+
+function dayIntensity(dayTrips: number) {
+
+  if (dayTrips === 0) return '#E7EFFC';
+
+  if (dayTrips === 1) return '#CDE0FA';
+
+  if (dayTrips === 2) return '#95BFF2';
+
+  return ranaColors.primary;
+
+}
+
+
+
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Destination card ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+function DestinationCard({ dest, index }: { dest: Destination; index: number }) {
+
+  const [expanded, setExpanded] = useState(false);
+
+  const { t } = useLanguage();
+
+
+
+  return (
+
+    <StaggeredFadeIn index={index} style={styles.destCard}>
+
+      <TouchableOpacity activeOpacity={0.92} onPress={() => setExpanded((v) => !v)}>
+
+        {/* Hero image */}
+
+        <ImageBackground
+
+          source={{ uri: dest.imageUri }}
+
+          style={styles.destImage}
+
+          imageStyle={{ borderRadius: ranaRadius.lg }}
+
+        >
+
+          <LinearGradient
+
+            colors={['transparent', 'rgba(20,30,50,0.72)']}
+
+            style={styles.destImageOverlay}
+
+          >
+
+            {/* Tag */}
+
+            <View style={[styles.destTag, { backgroundColor: dest.tagColor }]}>
+
+              <Text style={styles.destTagText}>{dest.tag}</Text>
+
+            </View>
+
+
+
+            {/* Name + location on image */}
+
+            <View style={styles.destImageBottom}>
+
+              <Text style={styles.destNameOnImage}>{dest.name}</Text>
+
+              <View style={styles.destLocationRow}>
+
+                <Ionicons name="location-sharp" size={12} color="rgba(255,255,255,0.85)" />
+
+                <Text style={styles.destLocationText}>{dest.location}</Text>
+
+              </View>
+
+            </View>
+
+          </LinearGradient>
+
+        </ImageBackground>
+
+
+
+        {/* Info row */}
+
+        <View style={styles.destInfoRow}>
+
+          <View style={styles.destInfoChip}>
+
+            <Ionicons name="calendar-outline" size={13} color={ranaColors.primary} />
+
+            <Text style={styles.destInfoChipText}>{dest.bestMonths}</Text>
+
+          </View>
+
+          <View style={styles.destInfoChip}>
+
+            <Ionicons name="navigate-outline" size={13} color={ranaColors.primary} />
+
+            <Text style={styles.destInfoChipText}>{dest.transport}</Text>
+
+          </View>
+
+          <View style={styles.destInfoChip}>
+
+            <Ionicons name="wallet-outline" size={13} color={ranaColors.primary} />
+
+            <Text style={styles.destInfoChipText}>{dest.estimatedBudget}</Text>
+
+          </View>
+
+        </View>
+
+
+
+        {/* Description ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â collapsed by default */}
+
+        {expanded && (
+
+          <Text style={styles.destDescription}>{dest.description}</Text>
+
+        )}
+
+
+
+        <View style={styles.destExpandRow}>
+
+          <Text style={styles.destExpandHint}>
+
+            {expanded ? t.showLess : t.readMore}
+
+          </Text>
+
+        </View>
+
+      </TouchableOpacity>
+
+    </StaggeredFadeIn>
+
+  );
+
+}
+
+
+
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Main screen ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+export default function ExploreScreen() {
+
+  const { trips } = useTravel();
+
+  const { t } = useLanguage();
+
+  const [cityName, setCityName] = useState('Locating...');
+
+  const [temperature, setTemperature] = useState<number | null>(null);
+
+  const [humidity, setHumidity] = useState<number | null>(null);
+
+  const [weatherIcon, setWeatherIcon] = useState<keyof typeof Ionicons.glyphMap>('partly-sunny');
+
+  const [activeFilter, setActiveFilter] = useState<string>('All');
+
+  const [boardingPassVisible, setBoardingPassVisible] = useState(false);
+
+  const [boardingPassTrip, setBoardingPassTrip] = useState<Trip | null>(null);
+
+  const [calendarVisible, setCalendarVisible] = useState(false);
+
+  const carouselProgress = useSharedValue<number>(0);
+
+  const carouselRef = useRef<ICarouselInstance>(null);
+
+
+
+  const startOfMonth = new Date();
+
+  startOfMonth.setDate(1);
+
+  startOfMonth.setHours(0, 0, 0, 0);
+
+
+
+  const thisMonthTrips = trips.filter((trip) => new Date(trip.dateISO) >= startOfMonth);
+
+  const totalMonthSpend = thisMonthTrips.reduce((sum, trip) => sum + trip.totalCost, 0);
+
+  const totalMonthKm = thisMonthTrips.reduce((sum, trip) => sum + trip.distanceKm, 0);
+
+
+
+  const dayCountMap = new Map<number, number>();
+
+  thisMonthTrips.forEach((trip) => {
+
+    const day = new Date(trip.dateISO).getDate();
+
+    dayCountMap.set(day, (dayCountMap.get(day) ?? 0) + 1);
+
+  });
+
+
+
+  const today = new Date();
+
+  const calendarDates = Array.from({ length: 21 }, (_, i) => {
+
+    const d = new Date();
+
+    d.setDate(today.getDate() - 7 + i); // 7 past days, today, 13 future days
+
+    return d;
+
+  });
+
+
+
+  const heatCells = Array.from({ length: 30 }, (_, index) => ({
+
+    day: index + 1,
+
+    color: dayIntensity(dayCountMap.get(index + 1) ?? 0),
+
+  }));
+
+
+
+  const FILTERS = ['All', 'Beach', 'Nature', 'History', 'Adventure', 'Landmark'];
+
+  const filteredDests =
+
+    activeFilter === 'All'
+
+      ? DESTINATIONS
+
+      : DESTINATIONS.filter((d) => d.tag === activeFilter);
+
+  const plannedTrips = trips
+
+    .filter((trip) => trip.status === 'planned')
+
+    .sort((a, b) => {
+
+      const aTime = a.startDate ? new Date(a.startDate).getTime() : new Date(a.dateISO).getTime();
+
+      const bTime = b.startDate ? new Date(b.startDate).getTime() : new Date(b.dateISO).getTime();
+
+      return aTime - bTime;
+
+    });
+
+  const tripsToDisplay: import('@/src/context/TravelContext').Trip[] = plannedTrips.length > 0 ? plannedTrips : [
+
+    { id: 'mock1', title: 'Bora Bora Luxury Escape', origin: 'Manila', destination: 'Bora Bora', transportType: 'International Airplane', dateISO: '2026-07-10T00:00:00Z', startDate: '2026-07-10', endDate: '2026-07-15', distanceKm: 8700, passengers: 2, totalCost: 0, country: 'French Polynesia', status: 'planned', budgetRange: '₱250,000 – ₱500,000+', budgetNotes: ['Flights: very expensive (multiple connections)', 'Stay: luxury resorts dominate', '👉 This is premium / honeymoon-level'] },
+
+    { id: 'mock2', title: 'Maldives Island Getaway', origin: 'Manila', destination: 'Maldives', transportType: 'International Airplane', dateISO: '2026-11-05T00:00:00Z', startDate: '2026-11-05', endDate: '2026-11-10', distanceKm: 5800, passengers: 3, totalCost: 0, country: 'Maldives', status: 'planned', budgetRange: '₱180,000 – ₱400,000', budgetNotes: ['Resorts + seaplane transfers', 'Can be cheaper with guesthouses (₱120k+)'] },
+
+    { id: 'mock3', title: 'Banff Nature Exploration', origin: 'Manila', destination: 'Banff National Park', transportType: 'International Airplane', dateISO: '2026-09-12T00:00:00Z', startDate: '2026-09-12', endDate: '2026-09-18', distanceKm: 10500, passengers: 4, totalCost: 0, country: 'Canada', status: 'planned', budgetRange: '₱120,000 – ₱220,000', budgetNotes: ['Flights to Canada = biggest cost', 'Car rental + park tours'] },
+
+    { id: 'mock4', title: 'Amazon Jungle Adventure', origin: 'Manila', destination: 'Amazon Rainforest', transportType: 'International Airplane', dateISO: '2026-08-20T00:00:00Z', startDate: '2026-08-20', endDate: '2026-08-27', distanceKm: 17000, passengers: 2, totalCost: 0, country: 'Brazil', status: 'planned', budgetRange: '₱180,000 – ₱300,000', budgetNotes: ['Long-haul flights', 'Guided jungle tours required'] },
+
+    { id: 'mock5', title: 'Rome Historical Tour', origin: 'Manila', destination: 'Rome', transportType: 'International Airplane', dateISO: '2026-10-01T00:00:00Z', startDate: '2026-10-01', endDate: '2026-10-07', distanceKm: 10300, passengers: 2, totalCost: 0, country: 'Italy', status: 'planned', budgetRange: '₱90,000 – ₱180,000', budgetNotes: ['Cheaper flights (promo possible)', 'Food + attractions reasonable'] },
+
+    { id: 'mock6', title: 'Machu Picchu Expedition', origin: 'Manila', destination: 'Machu Picchu', transportType: 'International Airplane', dateISO: '2026-09-25T00:00:00Z', startDate: '2026-09-25', endDate: '2026-10-02', distanceKm: 17500, passengers: 3, totalCost: 0, country: 'Peru', status: 'planned', budgetRange: '₱150,000 – ₱280,000', budgetNotes: ['Flights + train + entrance fees', 'Tour packages common'] },
+
+    { id: 'mock7', title: 'Queenstown Adventure Week', origin: 'Manila', destination: 'Queenstown', transportType: 'International Airplane', dateISO: '2026-12-01T00:00:00Z', startDate: '2026-12-01', endDate: '2026-12-07', distanceKm: 8300, passengers: 5, totalCost: 0, country: 'New Zealand', status: 'planned', budgetRange: '₱130,000 – ₱250,000', budgetNotes: ['Activities (bungee, skydiving) are pricey', 'Flights moderate'] },
+
+    { id: 'mock8', title: 'Patagonia Hiking Journey', origin: 'Manila', destination: 'Patagonia', transportType: 'International Airplane', dateISO: '2026-11-15T00:00:00Z', startDate: '2026-11-15', endDate: '2026-11-25', distanceKm: 18000, passengers: 4, totalCost: 0, country: 'Argentina / Chile', status: 'planned', budgetRange: '₱180,000 – ₱320,000', budgetNotes: ['Remote area → transport costs high', 'Hiking tours + gear'] },
+
+    { id: 'mock9', title: 'Paris Landmark Experience', origin: 'Manila', destination: 'Eiffel Tower', transportType: 'International Airplane', dateISO: '2026-10-15T00:00:00Z', startDate: '2026-10-15', endDate: '2026-10-20', distanceKm: 10700, passengers: 2, totalCost: 0, country: 'France', status: 'planned', budgetRange: '₱100,000 – ₱200,000', budgetNotes: ['Paris can be expensive, but manageable', 'Budget stays available'] },
+
+    { id: 'mock10', title: 'Great Wall Cultural Trip', origin: 'Manila', destination: 'Great Wall of China', transportType: 'International Airplane', dateISO: '2026-04-05T00:00:00Z', startDate: '2026-04-05', endDate: '2026-04-10', distanceKm: 2900, passengers: 6, totalCost: 0, country: 'China', status: 'planned', budgetRange: '₱60,000 – ₱120,000', budgetNotes: ['One of the cheapest in the list', 'Flights from PH are relatively affordable'] },
+
+  ];
+
+  const isPlanned = plannedTrips.length > 0;
+
+
+
+  // Only show Jan Ã¢â€ â€™ current month of this year
+
+  const heatmapMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    .slice(0, new Date().getMonth() + 1);
+
+
+
+  // Heatmap grid covers Jan 1 of this year Ã¢â€ â€™ today
+
+  const heatJan1 = new Date(new Date().getFullYear(), 0, 1);
+
+  const heatToday = new Date();
+
+  heatToday.setHours(0, 0, 0, 0);
+
+  const heatDayCount = Math.floor((heatToday.getTime() - heatJan1.getTime()) / 86400000) + 1;
+
+  const HEAT_ROWS = 5;
+
+  const HEAT_COLS = Math.ceil(heatDayCount / HEAT_ROWS);
+
+
+
+  useEffect(() => {
+
+    let mounted = true;
+
+
+
+    const weatherCodeToIcon = (code: number): keyof typeof Ionicons.glyphMap => {
+
+      if (code === 0) return 'sunny';
+
+      if (code <= 3) return 'partly-sunny';
+
+      if (code <= 57) return 'cloudy';
+
+      if (code <= 67) return 'rainy';
+
+      if (code <= 77) return 'snow';
+
+      if (code <= 82) return 'rainy';
+
+      if (code <= 95) return 'thunderstorm';
+
+      return 'partly-sunny';
+
+    };
+
+
+
+    const fetchWeather = async () => {
+
+      try {
+
+        const permission = await Location.requestForegroundPermissionsAsync();
+
+        if (permission.status !== 'granted') {
+
+          if (mounted) { setCityName('Quezon City'); setTemperature(29); }
+
+          return;
+
+        }
+
+        const current = await Location.getCurrentPositionAsync({});
+
+        const { latitude, longitude } = current.coords;
+
+        const places = await Location.reverseGeocodeAsync({ latitude, longitude });
+
+        const place = places[0];
+
+        const resolvedCity = place?.city || place?.district || place?.subregion || 'Current location';
+
+        const weatherResponse = await fetch(
+
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,relative_humidity_2m`
+
+        );
+
+        const weatherJson = (await weatherResponse.json()) as {
+
+          current?: { temperature_2m?: number; weather_code?: number; relative_humidity_2m?: number };
+
+        };
+
+        if (!mounted) return;
+
+        setCityName(resolvedCity);
+
+        if (typeof weatherJson.current?.temperature_2m === 'number') setTemperature(weatherJson.current.temperature_2m);
+
+        if (typeof weatherJson.current?.weather_code === 'number') setWeatherIcon(weatherCodeToIcon(weatherJson.current.weather_code));
+
+        if (typeof weatherJson.current?.relative_humidity_2m === 'number') setHumidity(weatherJson.current.relative_humidity_2m);
+
+      } catch {
+
+        if (mounted) { setCityName('Quezon City'); setTemperature(29); }
+
+      }
+
+    };
+
+
+
+    fetchWeather();
+
+    // Refresh weather every 10 minutes
+
+    const interval = setInterval(fetchWeather, 10 * 60 * 1000);
+
+    return () => { mounted = false; clearInterval(interval); };
+
+  }, []);
+
+
+
+  return (
+
+    <LinearGradient colors={[ranaColors.backgroundTop, ranaColors.backgroundBottom]} style={styles.container}>
+
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+
+
+        {/* Top Welcome Banner */}
+
+        <StaggeredFadeIn index={0} style={styles.topWelcomeBar}>
+
+          <View style={styles.topWelcomeRow}>
+
+            <TextType
+
+              texts={["Welcome in Rana!"]}
+
+              typingSpeed={75}
+
+              pauseDuration={1200}
+
+              showCursor
+
+              cursorCharacter="|"
+
+              textStyle={styles.topWelcomeTitle}
+
+            />
+
+            <TouchableOpacity style={styles.calendarBtn} onPress={() => setCalendarVisible(true)} activeOpacity={0.8}>
+
+              <Ionicons name="calendar-outline" size={18} color={ranaColors.primary} />
+
+              <Text style={styles.calendarBtnText}>Calendar</Text>
+
+            </TouchableOpacity>
+
+          </View>
+
+        </StaggeredFadeIn>
+
+
+
+        {/* Hero Banner */}
+
+        <StaggeredFadeIn index={1} style={styles.heroBannerCard}>
+
+          <LinearGradient
+
+            colors={['#1B2B59', '#2E4A8F']}
+
+            start={{ x: 0, y: 0 }}
+
+            end={{ x: 1, y: 1 }}
+
+            style={styles.heroBannerGradient}
+
+          >
+
+            {/* Left text */}
+
+            <View style={styles.heroBannerLeft}>
+
+              <View style={styles.heroBannerBadge}>
+
+                <Ionicons name="airplane" size={10} color="#fff" />
+
+                <Text style={styles.heroBannerBadgeText}>TRAVELER</Text>
+
+              </View>
+
+              <Text style={styles.heroBannerName}>Hi, Joshua!</Text>
+
+              <Text style={styles.heroBannerWelcome}>
+
+                Welcome to <Text style={{ color: '#7EB3FF', fontWeight: '700' }}>Rana</Text> — your smart travel planner.
+
+              </Text>
+
+      
+
+            </View>
+
+
+
+            {/* Right logo */}
+
+            <View style={styles.heroBannerLogoWrap}>
+
+              <HeadLogo width={72} height={72} />
+
+            </View>
+
+          </LinearGradient>
+
+        </StaggeredFadeIn>
+
+        {/* Planned Upcoming Trips */}
+
+        <StaggeredFadeIn index={1} style={styles.upcomingSection}>
+
+          <Text style={styles.sectionHeaderTitle}>Planned Trips</Text>
+
+          <Text style={styles.sectionHeaderDesc}>Your upcoming adventures — swipe to explore each trip.</Text>
+
+          <View style={styles.upcomingCarouselWrap}>
+
+                <View style={styles.upcomingCarouselViewport}>
+
+                  <Carousel
+
+                    ref={carouselRef}
+
+                    width={UPCOMING_CAROUSEL_ITEM_W}
+
+                    height={240}
+
+                    loop={false}
+
+                    mode="parallax"
+
+                    modeConfig={{
+
+                      parallaxScrollingScale: 0.95,
+
+                      parallaxAdjacentItemScale: 0.72,
+
+                      parallaxScrollingOffset: 88,
+
+                    }}
+
+                    pagingEnabled
+
+                    snapEnabled
+
+                    scrollAnimationDuration={UPCOMING_SCROLL_ANIMATION_MS}
+
+                    data={tripsToDisplay}
+
+                    onProgressChange={carouselProgress}
+
+                    style={styles.upcomingCarouselScroll}
+
+                    renderItem={({ item: trip, animationValue }) => {
+
+                    const overlayStyle = useAnimatedStyle(() => {
+
+                      const opacity = interpolate(
+
+                        animationValue.value,
+
+                        [-1, 0, 1],
+
+                        [0.7, 0, 0.7],
+
+                        Extrapolation.CLAMP
+
+                      );
+
+                      return { opacity };
+
+                    });
+
+
+
+                    const displayDate = trip.startDate ? trip.startDate : trip.dateISO;
+
+                    const d = new Date(displayDate);
+
+                    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                    const endStr = trip.endDate
+
+                      ? new Date(trip.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+                      : null;
+
+                    const ticketTitle = trip.title?.trim() || `${trip.origin} to ${trip.destination}`;
+
+                    const ticketCode = `TK-${trip.id.replace(/[^0-9a-z]/gi, '').slice(-6).toUpperCase() || '000001'}`;
+
+                    const timeLabel = trip.startDate?.includes('T')
+
+                      ? new Date(trip.startDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+
+                      : '--:--';
+
+                    return (
+
+                      <TouchableOpacity
+
+                        activeOpacity={0.88}
+
+                        style={styles.upcomingBigCard}
+
+                        onPress={() => { setBoardingPassTrip(trip); setBoardingPassVisible(true); }}
+
+                      >
+
+                        {/* â”€â”€â”€ TICKET TOP (HEADER) â”€â”€â”€ */}
+
+                        <LinearGradient
+
+                          colors={['#0E2A66', '#1B3A7F']}
+
+                          start={{ x: 0, y: 0 }}
+
+                          end={{ x: 1, y: 1 }}
+
+                          style={styles.ticketHeaderGradient}
+
+                        >
+
+                          {/* Decorative circles */}
+
+                          <View style={[styles.decorCircleTL, { backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+
+                          <View style={[styles.decorCircleBR, { backgroundColor: 'rgba(0,0,0,0.15)' }]} />
+
+
+
+                          {/* Airline & Status Row */}
+
+                          <View style={styles.ticketHeaderRow}>
+
+                            <Text style={styles.ticketAirlineName}>RANA TRAVEL</Text>
+
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+
+                              <TouchableOpacity
+
+                                style={styles.mapIconButton}
+
+                                onPress={() => router.push(`/map-view?origin=${encodeURIComponent(trip.origin)}&destination=${encodeURIComponent(trip.destination)}`)}
+
+                              >
+
+                                <Ionicons name="map" size={12} color="#fff" />
+
+                                <Text style={styles.mapIconText}>MAP</Text>
+
+                              </TouchableOpacity>
+
+                              <View style={styles.ticketClassBadge}>
+
+                                <Text style={styles.ticketClassBadgeText}>{isPlanned ? 'PLANNED' : 'PREVIEW'}</Text>
+
+                              </View>
+
+                            </View>
+
+                          </View>
+
+
+
+                          {/* Route Display */}
+
+                          <View style={styles.ticketRouteRow}>
+
+                            <View style={styles.ticketRouteAirport}>
+
+                              <Text style={styles.ticketIataCode}>{trip.origin.slice(0, 3).toUpperCase()}</Text>
+
+                              <Text style={styles.ticketCityName}>{trip.origin}</Text>
+
+                            </View>
+
+
+
+                            <View style={styles.ticketFlightPath}>
+
+                              <View style={styles.ticketFlightLine}>
+
+                                <View style={styles.ticketLineDot} />
+
+                                <View style={styles.ticketLineBar} />
+
+                                <Ionicons name="airplane" size={16} color="#fff" />
+
+                                <View style={styles.ticketLineBar} />
+
+                                <View style={styles.ticketLineDot} />
+
+                              </View>
+
+                              <Text style={styles.ticketDuration} numberOfLines={1}>{trip.transportType}</Text>
+
+                            </View>
+
+
+
+                            <View style={[styles.ticketRouteAirport, { alignItems: 'flex-end' }]}>
+
+                              <Text style={styles.ticketIataCode}>{trip.destination.slice(0, 3).toUpperCase()}</Text>
+
+                              <Text style={styles.ticketCityName}>{trip.destination}</Text>
+
+                            </View>
+
+                          </View>
+
+
+
+                          {/* Time Row */}
+
+                          <View style={styles.ticketTimeRow}>
+
+                            <Text style={styles.ticketTimeText}>{timeLabel}</Text>
+
+                            <Text style={styles.ticketFlightCode}>{ticketCode}</Text>
+
+                            <Text style={styles.ticketTimeText}>{endStr ? endStr : 'TBD'}</Text>
+
+                          </View>
+
+                        </LinearGradient>
+
+
+
+                        {/* â”€â”€â”€ TEAR DIVIDER â”€â”€â”€ */}
+
+                        <View style={styles.ticketTearRow}>
+
+                          <View style={[styles.ticketHalfCircle, styles.ticketHalfCircleLeft, { backgroundColor: '#FFFFFF' }]} />
+
+                          <View style={styles.ticketDashedLineContainer}>
+
+                            {Array.from({ length: 18 }).map((_, i) => (
+
+                              <View key={i} style={styles.ticketDash} />
+
+                            ))}
+
+                          </View>
+
+                          <View style={[styles.ticketHalfCircle, styles.ticketHalfCircleRight, { backgroundColor: '#FFFFFF' }]} />
+
+                        </View>
+
+
+
+                        {/* â”€â”€â”€ TICKET BOTTOM (DETAILS) â”€â”€â”€ */}
+
+                        <View style={styles.ticketCardBottom}>
+
+                          <Text style={styles.ticketTripTitle}>{ticketTitle}</Text>
+
+
+
+                          {/* Details Grid */}
+
+                          <View style={styles.ticketDetailsGrid}>
+
+                            <View style={styles.ticketDetailItem}>
+
+                              <Text style={styles.ticketDetailLabel}>Date</Text>
+
+                              <Text style={styles.ticketDetailValue}>{dateStr}</Text>
+
+                            </View>
+
+                            <View style={styles.ticketDetailItem}>
+
+                              <Text style={styles.ticketDetailLabel}>Country</Text>
+
+                              <Text style={styles.ticketDetailValue}>{trip.country}</Text>
+
+                            </View>
+
+                            <View style={styles.ticketDetailItem}>
+
+                              <Text style={styles.ticketDetailLabel}>Transport</Text>
+
+                              <Text style={styles.ticketDetailValue} numberOfLines={1}>{trip.transportType}</Text>
+
+                            </View>
+
+                            <View style={styles.ticketDetailItem}>
+
+                              <Text style={styles.ticketDetailLabel}>Cost</Text>
+
+                              <Text style={[styles.ticketDetailValue, { color: ranaColors.primary, fontWeight: '900' }]}>
+
+                                {trip.totalCost > 0 ? `â‚±${(trip.totalCost / 1000).toFixed(1)}k` : 'TBD'}
+
+                              </Text>
+
+                            </View>
+
+                          </View>
+
+
+
+                          {/* Estimated Budget Section */}
+
+                          {trip.budgetRange ? (
+
+                            <View style={styles.ticketBudgetSection}>
+
+                              <View style={styles.ticketBudgetHeader}>
+
+                                <Ionicons name="wallet-outline" size={11} color="#0EA5E9" />
+
+                                <Text style={styles.ticketBudgetLabel}>ESTIMATED TRAVEL BUDGET</Text>
+
+                              </View>
+
+                              <Text style={styles.ticketBudgetRange}>{trip.budgetRange}</Text>
+
+                              {(trip.budgetNotes ?? []).map((note, i) => (
+
+                                <View key={i} style={styles.ticketBudgetNoteRow}>
+
+                                  <Text style={styles.ticketBudgetDot}>•</Text>
+
+                                  <Text style={styles.ticketBudgetNoteText}>{note}</Text>
+
+                                </View>
+
+                              ))}
+
+                            </View>
+
+                          ) : null}
+
+
+
+                          {/* Barcode-like visual & Status */}
+
+                          <View style={styles.ticketBarcodeRow}>
+
+                            <View style={styles.ticketBarcodeContainer}>
+
+                              {Array.from({ length: 20 }).map((_, i) => (
+
+                                <View
+
+                                  key={i}
+
+                                  style={[
+
+                                    styles.ticketBarcodeLine,
+
+                                    {
+
+                                      height: [14, 22, 18, 24, 16, 20, 12, 26][i % 8],
+
+                                      backgroundColor: i % 3 === 0 ? ranaColors.primary : '#E0E8F5',
+
+                                    },
+
+                                  ]}
+
+                                />
+
+                              ))}
+
+                            </View>
+
+                            <View style={[styles.ticketStatusBadge, { borderColor: ranaColors.primary }]}>
+
+                              <View style={[styles.ticketStatusDot, { backgroundColor: ranaColors.primary }]} />
+
+                              <Text style={[styles.ticketStatusTextSmall, { color: ranaColors.primary }]}>
+
+                                {isPlanned ? 'PLANNED' : 'READY'}
+
+                              </Text>
+
+                            </View>
+
+                          </View>
+
+                        </View>
+
+                        {/* Overlay for adjacent slides so they look faded/blurred out */}
+
+                        <Animated.View style={[styles.cardBlurOverlay, overlayStyle]} pointerEvents="none" />
+
+                      </TouchableOpacity>
+
+                    );
+
+                    }}
+
+                  />
+
+                </View>
+
+              </View>
+
+        </StaggeredFadeIn>
+
+
+
+        {/* Destination Target */}
+
+        <StaggeredFadeIn index={2} style={styles.destinationHeader}>
+
+          <Text style={styles.destinationTitle}>Explore Destinations</Text>
+
+        </StaggeredFadeIn>
+
+
+
+        {/* Filter chips */}
+
+        <ScrollView
+
+          horizontal
+
+          showsHorizontalScrollIndicator={false}
+
+          contentContainerStyle={styles.filterRow}
+
+        >
+
+          {FILTERS.map((f) => {
+
+            const active = f === activeFilter;
+
+            return (
+
+              <TouchableOpacity
+
+                key={f}
+
+                style={[styles.filterChip, active && styles.filterChipActive]}
+
+                onPress={() => setActiveFilter(f)}
+
+                activeOpacity={0.75}
+
+              >
+
+                <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+
+                  {f}
+
+                </Text>
+
+              </TouchableOpacity>
+
+            );
+
+          })}
+
+        </ScrollView>
+
+
+
+        {/* Destination cards */}
+
+        {filteredDests.map((dest, i) => (
+
+          <DestinationCard key={dest.id} dest={dest} index={i + 4} />
+
+        ))}
+
+
+
+      </ScrollView>
+
+
+
+      {/* 3D Boarding Pass Modal */}
+
+      <BoardingPassModal
+
+        visible={boardingPassVisible}
+
+        trip={boardingPassTrip}
+
+        onClose={() => setBoardingPassVisible(false)}
+
+      />
+
+      {/* Calendar Modal */}
+
+      <Modal visible={calendarVisible} animationType="slide" transparent>
+
+        <View style={styles.calendarOverlay}>
+
+          <View style={styles.calendarModal}>
+
+            <View style={styles.calendarHeader}>
+
+              <Text style={styles.calendarTitle}>Trip Calendar</Text>
+
+              <TouchableOpacity onPress={() => setCalendarVisible(false)} style={styles.calendarCloseBtn}>
+
+                <Ionicons name="close" size={22} color={ranaColors.textPrimary} />
+
+              </TouchableOpacity>
+
+            </View>
+
+            {trips.length === 0 ? (
+
+              <View style={styles.calendarEmpty}>
+
+                <Ionicons name="calendar-outline" size={48} color={ranaColors.muted} />
+
+                <Text style={styles.calendarEmptyText}>No trips scheduled yet</Text>
+
+              </View>
+
+            ) : (
+
+              <ScrollView style={styles.calendarList} showsVerticalScrollIndicator={false}>
+
+                {trips
+
+                  .filter(t => t.startDate)
+
+                  .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())
+
+                  .map(trip => {
+
+                    const start = new Date(trip.startDate!);
+
+                    const end = trip.endDate ? new Date(trip.endDate) : null;
+
+                    const startStr = start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+                    const endStr = end ? end.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : null;
+
+                    const isPast = new Date(trip.endDate || trip.startDate!) < new Date();
+
+                    return (
+
+                      <View key={trip.id} style={[styles.calendarTripItem, isPast && styles.calendarTripPast]}>
+
+                        <View style={styles.calendarTripDotWrap}>
+
+                          <View style={[styles.calendarTripDot, { backgroundColor: isPast ? ranaColors.muted : ranaColors.primary }]} />
+
+                          {end && <View style={styles.calendarTripLine} />}
+
+                        </View>
+
+                        <View style={styles.calendarTripContent}>
+
+                          <Text style={[styles.calendarTripName, isPast && styles.calendarTripNamePast]}>
+
+                            {trip.title || `${trip.origin} → ${trip.destination}`}
+
+                          </Text>
+
+                          <View style={styles.calendarTripDateRow}>
+
+                            <Ionicons name="calendar-outline" size={12} color={ranaColors.primary} />
+
+                            <Text style={styles.calendarTripDate}>{startStr}</Text>
+
+                          </View>
+
+                          {endStr && (
+
+                            <View style={styles.calendarTripDateRow}>
+
+                              <Ionicons name="flag-outline" size={12} color={ranaColors.textSecondary} />
+
+                              <Text style={styles.calendarTripDateEnd}>{endStr}</Text>
+
+                            </View>
+
+                          )}
+
+                          <View style={styles.calendarTripMetaRow}>
+
+                            <View style={styles.calendarTripChip}>
+
+                              <Ionicons name="airplane-outline" size={10} color="#fff" />
+
+                              <Text style={styles.calendarTripChipText}>{trip.transportType}</Text>
+
+                            </View>
+
+                            <View style={[styles.calendarTripChip, { backgroundColor: isPast ? '#94A3B8' : '#0EA5E9' }]}>
+
+                              <Text style={styles.calendarTripChipText}>{isPast ? 'Past' : trip.status}</Text>
+
+                            </View>
+
+                          </View>
+
+                        </View>
+
+                      </View>
+
+                    );
+
+                  })}
+
+              </ScrollView>
+
+            )}
+
+          </View>
+
+        </View>
+
+      </Modal>
+
+    </LinearGradient>
+
+  );
+
+}
+
+
+
+const styles = StyleSheet.create({
+
+  container: { flex: 1 },
+
+  content: {
+
+    paddingTop: 56,
+
+    paddingHorizontal: ranaSpacing.md,
+
+    paddingBottom: 120,
+
+  },
+
+
+
+  // Ã¢â‚¬â€Ã¢â‚¬â€ Dashboard Header Ã¢â‚¬â€Ã¢â‚¬â€
+
+  dashboardHeader: {
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
+
+    alignItems: 'center',
+
+    backgroundColor: '#FFFFFF',
+
+    borderRadius: 24,
+
+    padding: 16,
+
+    ...ranaShadow.card,
+
+    marginTop: -15,
+
+    marginBottom: 20,
+
+  },
+
+  heatmapMainContainer: {
+
+    flex: 1,
+
+    marginRight: 16,
+
+  },
+
+  heatmapMonthsRow: {
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
+
+    marginBottom: 8,
+
+    paddingRight: 4,
+
+  },
+
+  heatmapMonthText: {
+
+    fontSize: 10,
+
+    color: ranaColors.textSecondary,
+
+    fontWeight: '500',
+
+  },
+
+  heatmapGrid: {
+
+    gap: 4,
+
+  },
+
+  heatmapDotRow: {
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
+
+  },
+
+  heatmapDot: {
+
+    width: 6,
+
+    height: 6,
+
+    borderRadius: 3,
+
+  },
+
+  compactWeatherCard: {
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+    backgroundColor: '#FAFAFA',
+
+    paddingVertical: 12,
+
+    paddingHorizontal: 16,
+
+    borderRadius: 16,
+
+    minWidth: 80,
+
+  },
+
+  weatherIconWrap: {
+
+    marginBottom: 4,
+
+  },
+
+  compactWeatherTemp: {
+
+    fontSize: 20,
+
+    fontWeight: '800',
+
+    color: ranaColors.textPrimary,
+
+  },
+
+  weatherHumidityRow: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    gap: 2,
+
+    marginTop: 2,
+
+  },
+
+  compactWeatherHumidity: {
+
+    fontSize: 11,
+
+    color: ranaColors.textSecondary,
+
+    fontWeight: '600',
+
+  },
+
+  compactWeatherLoc: {
+
+    fontSize: 10,
+
+    color: ranaColors.textSecondary,
+
+    marginTop: 2,
+
+  },
+
+
+
+
+
+  // -- Elevated Header Card --
+
+  headerCard: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    backgroundColor: ranaColors.card,
+
+    borderRadius: 24,
+
+    paddingVertical: 18,
+
+    paddingHorizontal: 20,
+
+    marginBottom: 20,
+
+    shadowColor: '#1B2B59',
+
+    shadowOpacity: 0.08,
+
+    shadowRadius: 12,
+
+    shadowOffset: { width: 0, height: 4 },
+
+    elevation: 3,
+
+  },
+
+  headerTextBlock: {
+
+    flex: 1,
+
+  },
+
+  headerGradient: {
+
+    borderRadius: 20,
+
+    overflow: 'hidden',
+
+    width: '100%',
+
+  },
+
+  headerInner: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    paddingHorizontal: ranaSpacing.md,
+
+    paddingVertical: 12,
+
+  },
+
+  heroLeft: {
+
+    width: 64,
+
+    height: 64,
+
+    borderRadius: 16,
+
+    overflow: 'hidden',
+
+    marginRight: 12,
+
+  },
+
+  heroMascot: {
+
+    width: 64,
+
+    height: 64,
+
+    borderRadius: 16,
+
+    overflow: 'hidden',
+
+    backgroundColor: 'transparent',
+
+  },
+
+  heroSvgClip: {
+
+    width: 72,
+
+    height: 72,
+
+    borderRadius: 18,
+
+    overflow: 'hidden',
+
+    backgroundColor: '#FFFFFF',
+
+  },
+
+  heroPlaceholder: {
+
+    width: 64,
+
+    height: 64,
+
+    borderRadius: 16,
+
+    backgroundColor: '#FFFFFF',
+
+    opacity: 0.9,
+
+  },
+
+
+
+  // -- Hero Banner --
+
+  heroBannerCard: {
+
+    borderRadius: 24,
+
+    marginBottom: 32,
+
+    overflow: 'hidden',
+
+    shadowColor: '#1B2B59',
+
+    shadowOpacity: 0.28,
+
+    shadowRadius: 18,
+
+    shadowOffset: { width: 0, height: 6 },
+
+    elevation: 7,
+
+  },
+
+  heroBannerGradient: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    justifyContent: 'space-between',
+
+    paddingHorizontal: 20,
+
+    paddingVertical: 20,
+
+  },
+
+  heroBannerLeft: {
+
+    flex: 1,
+
+    paddingRight: 12,
+
+  },
+
+  heroBannerLogoWrap: {
+
+    width: 80,
+
+    height: 80,
+
+    borderRadius: 40,
+
+    backgroundColor: 'rgba(255,255,255,0.12)',
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+    overflow: 'hidden',
+
+    borderWidth: 1.5,
+
+    borderColor: 'rgba(255,255,255,0.25)',
+
+  },
+
+  heroBannerBadge: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    gap: 5,
+
+    backgroundColor: 'rgba(255,255,255,0.15)',
+
+    alignSelf: 'flex-start',
+
+    paddingHorizontal: 10,
+
+    paddingVertical: 4,
+
+    borderRadius: 20,
+
+    marginBottom: 12,
+
+  },
+
+  heroBannerBadgeText: {
+
+    fontSize: 10,
+
+    fontWeight: '700',
+
+    color: '#fff',
+
+    letterSpacing: 1,
+
+  },
+
+  heroBannerName: {
+
+    fontSize: 24,
+
+    fontWeight: '800',
+
+    color: '#fff',
+
+    marginBottom: 2,
+
+  },
+
+  heroBannerSub: {
+
+    fontSize: 13,
+
+    color: 'rgba(255,255,255,0.72)',
+
+    lineHeight: 20,
+
+  },
+
+  heroBannerWelcome: {
+
+    fontSize: 11,
+
+    color: 'rgba(255,255,255,0.55)',
+
+    marginBottom: 4,
+
+    lineHeight: 16,
+
+  },
+
+  heroBannerHighlight: {
+
+    color: '#fff',
+
+    fontWeight: '700',
+
+  },
+
+  heroBannerTagline: {
+
+    fontSize: 11,
+
+    color: 'rgba(255,255,255,0.45)',
+
+    marginTop: 6,
+
+    fontStyle: 'italic',
+
+    letterSpacing: 0.3,
+
+  },
+
+
+
+  headerGreetingLarge: {
+
+    fontSize: 18,
+
+    fontWeight: '800',
+
+    color: ranaColors.textPrimary,
+
+    marginBottom: 4,
+
+  },
+
+  headerGreetingSub: {
+
+    fontSize: 13,
+
+    color: ranaColors.textSecondary,
+
+    lineHeight: 18,
+
+  },
+
+  newTripButton: {
+
+    backgroundColor: ranaColors.primary,
+
+    paddingHorizontal: 12,
+
+    paddingVertical: 8,
+
+    borderRadius: 16,
+
+    marginLeft: 12,
+
+  },
+
+  newTripText: {
+
+    color: '#FFFFFF',
+
+    fontWeight: '700',
+
+  },
+
+  headerGreeting: {
+
+    fontSize: 16,
+
+    fontWeight: '700',
+
+    color: ranaColors.textPrimary,
+
+    letterSpacing: -0.3,
+
+    marginBottom: 5,
+
+  },
+
+  headerSubline: {
+
+    fontSize: 13,
+
+    color: ranaColors.textSecondary,
+
+    lineHeight: 19,
+
+  },
+
+  headerHighlight: {
+
+    color: ranaColors.primary,
+
+    fontWeight: '700',
+
+  },
+
+  headerWelcomeButton: {
+
+    backgroundColor: ranaColors.primary,
+
+    paddingHorizontal: 12,
+
+    paddingVertical: 6,
+
+    borderRadius: 16,
+
+    marginLeft: 8,
+
+    justifyContent: 'center',
+
+    alignItems: 'center',
+
+  },
+
+  headerWelcomeText: {
+
+    color: '#FFFFFF',
+
+    fontWeight: '700',
+
+    fontSize: 12,
+
+  },
+
+  topWelcomeBar: {
+
+    backgroundColor: 'transparent',
+
+    paddingHorizontal: ranaSpacing.md,
+
+    paddingVertical: 8,
+
+    marginBottom: 8,
+
+  },
+
+  topWelcomeTitle: {
+
+    fontSize: 18,
+
+    fontWeight: '800',
+
+    color: ranaColors.primary,
+
+  },
+
+  topWelcomeRow: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    justifyContent: 'space-between',
+
+  },
+
+  headerNotifWrap: {
+
+    position: 'relative',
+
+    marginLeft: 8,
+
+    padding: 4,
+
+  },
+
+  headerNotifDot: {
+
+    position: 'absolute',
+
+    top: 4,
+
+    right: 4,
+
+    width: 8,
+
+    height: 8,
+
+    borderRadius: 4,
+
+    backgroundColor: '#E05C5C',
+
+    zIndex: 1,
+
+    borderWidth: 1.5,
+
+    borderColor: ranaColors.card,
+
+  },
+
+
+
+  // -- Upcoming Trips --
+
+  upcomingSection: {
+
+    marginBottom: 24,
+
+  },
+
+  sectionHeaderTitle: {
+
+    fontSize: 18,
+
+    fontWeight: '800',
+
+    color: ranaColors.textPrimary,
+
+    marginBottom: 4,
+
+  },
+
+  sectionHeaderDesc: {
+
+    fontSize: 13,
+
+    color: ranaColors.textSecondary,
+
+    marginBottom: 12,
+
+  },
+
+  upcomingCarouselWrap: {
+
+    marginHorizontal: -ranaSpacing.md,
+
+    paddingVertical: 6,
+
+  },
+
+  upcomingCarouselViewport: {
+
+    position: 'relative',
+
+  },
+
+  upcomingCarouselScroll: {
+
+    width: SCREEN_WIDTH,
+
+    overflow: 'visible',
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+  },
+
+  upcomingBigCard: {
+
+    backgroundColor: '#FFFFFF',
+
+    borderRadius: 24,
+
+    width: UPCOMING_CAROUSEL_ITEM_W,
+
+    overflow: 'hidden',
+
+    shadowColor: '#000',
+
+    shadowOffset: { width: 0, height: 12 },
+
+    shadowOpacity: 0.28,
+
+    shadowRadius: 20,
+
+    elevation: 12,
+
+  },
+
+  cardBlurOverlay: {
+
+    ...StyleSheet.absoluteFillObject,
+
+    backgroundColor: 'rgba(255,255,255,0.7)',
+
+    borderRadius: 24,
+
+  },
+
+  ticketHeaderGradient: {
+
+    paddingHorizontal: 18,
+
+    paddingTop: 16,
+
+    paddingBottom: 20,
+
+    overflow: 'hidden',
+
+  },
+
+  decorCircleTL: {
+
+    position: 'absolute',
+
+    top: -50,
+
+    left: -50,
+
+    width: 110,
+
+    height: 110,
+
+    borderRadius: 55,
+
+  },
+
+  decorCircleBR: {
+
+    position: 'absolute',
+
+    bottom: -45,
+
+    right: -45,
+
+    width: 90,
+
+    height: 90,
+
+    borderRadius: 45,
+
+  },
+
+  ticketHeaderRow: {
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
+
+    alignItems: 'center',
+
+    marginBottom: 12,
+
+    zIndex: 10,
+
+  },
+
+  ticketAirlineName: {
+
+    fontSize: 11,
+
+    fontWeight: '800',
+
+    color: 'rgba(255,255,255,0.9)',
+
+    letterSpacing: 2,
+
+  },
+
+  mapIconButton: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    backgroundColor: 'rgba(255,255,255,0.18)',
+
+    paddingHorizontal: 8,
+
+    paddingVertical: 3,
+
+    borderRadius: 8,
+
+    borderWidth: 1,
+
+    borderColor: 'rgba(255,255,255,0.28)',
+
+    gap: 4,
+
+  },
+
+  mapIconText: {
+
+    color: '#fff',
+
+    fontSize: 9,
+
+    fontWeight: '700',
+
+    letterSpacing: 0.8,
+
+  },
+
+  ticketClassBadge: {
+
+    backgroundColor: 'rgba(255,255,255,0.18)',
+
+    paddingHorizontal: 10,
+
+    paddingVertical: 3,
+
+    borderRadius: 8,
+
+    borderWidth: 1,
+
+    borderColor: 'rgba(255,255,255,0.28)',
+
+  },
+
+  ticketClassBadgeText: {
+
+    color: '#fff',
+
+    fontSize: 9,
+
+    fontWeight: '700',
+
+    letterSpacing: 0.8,
+
+  },
+
+  ticketRouteRow: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    justifyContent: 'space-between',
+
+    marginBottom: 12,
+
+  },
+
+  ticketRouteAirport: {
+
+    flex: 1,
+
+  },
+
+  ticketIataCode: {
+
+    fontSize: 28,
+
+    fontWeight: '900',
+
+    color: '#fff',
+
+    letterSpacing: -0.5,
+
+    lineHeight: 32,
+
+  },
+
+  ticketCityName: {
+
+    fontSize: 10,
+
+    color: 'rgba(255,255,255,0.7)',
+
+    fontWeight: '600',
+
+    marginTop: 0,
+
+  },
+
+  ticketFlightPath: {
+
+    flex: 1,
+
+    alignItems: 'center',
+
+  },
+
+  ticketFlightLine: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    gap: 2,
+
+  },
+
+  ticketLineDot: {
+
+    width: 4,
+
+    height: 4,
+
+    borderRadius: 2,
+
+    backgroundColor: 'rgba(255,255,255,0.6)',
+
+  },
+
+  ticketLineBar: {
+
+    flex: 1,
+
+    height: 0.8,
+
+    backgroundColor: 'rgba(255,255,255,0.4)',
+
+  },
+
+  ticketDuration: {
+
+    color: 'rgba(255,255,255,0.75)',
+
+    fontSize: 9,
+
+    marginTop: 3,
+
+    letterSpacing: 0.3,
+
+    fontWeight: '600',
+
+  },
+
+  ticketTimeRow: {
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
+
+    alignItems: 'center',
+
+  },
+
+  ticketTimeText: {
+
+    fontSize: 14,
+
+    fontWeight: '800',
+
+    color: '#fff',
+
+    letterSpacing: 0.2,
+
+  },
+
+  ticketFlightCode: {
+
+    fontSize: 10,
+
+    color: 'rgba(255,255,255,0.75)',
+
+    letterSpacing: 1,
+
+    fontWeight: '700',
+
+  },
+
+  ticketTearRow: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    backgroundColor: '#F8F9FB',
+
+    height: 22,
+
+  },
+
+  ticketHalfCircle: {
+
+    width: 22,
+
+    height: 22,
+
+    borderRadius: 11,
+
+  },
+
+  ticketHalfCircleLeft: {
+
+    marginLeft: -11,
+
+  },
+
+  ticketHalfCircleRight: {
+
+    marginRight: -11,
+
+  },
+
+  ticketDashedLineContainer: {
+
+    flex: 1,
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-evenly',
+
+    alignItems: 'center',
+
+    paddingHorizontal: 2,
+
+  },
+
+  ticketDash: {
+
+    width: 4,
+
+    height: 0.8,
+
+    backgroundColor: '#D0DCF2',
+
+    borderRadius: 0.5,
+
+  },
+
+  ticketCardBottom: {
+
+    backgroundColor: '#F8F9FB',
+
+    paddingHorizontal: 16,
+
+    paddingTop: 12,
+
+    paddingBottom: 14,
+
+  },
+
+  ticketTripTitle: {
+
+    fontSize: 13,
+
+    fontWeight: '800',
+
+    color: '#0F1D3B',
+
+    marginBottom: 10,
+
+    letterSpacing: 0.2,
+
+  },
+
+  ticketDetailsGrid: {
+
+    flexDirection: 'row',
+
+    flexWrap: 'wrap',
+
+    gap: 8,
+
+    marginBottom: 10,
+
+  },
+
+  ticketDetailItem: {
+
+    width: '48%',
+
+  },
+
+  ticketDetailLabel: {
+
+    fontSize: 8,
+
+    color: ranaColors.textSecondary,
+
+    letterSpacing: 1,
+
+    fontWeight: '700',
+
+    marginBottom: 2,
+
+  },
+
+  ticketDetailValue: {
+
+    fontSize: 12,
+
+    fontWeight: '700',
+
+    color: '#0F1D3B',
+
+    letterSpacing: 0.1,
+
+  },
+
+  ticketBudgetSection: {
+
+    marginTop: 10,
+
+    marginBottom: 8,
+
+    paddingTop: 8,
+
+    borderTopWidth: 0.8,
+
+    borderTopColor: '#E0E8F5',
+
+  },
+
+  ticketBudgetHeader: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    gap: 4,
+
+    marginBottom: 3,
+
+  },
+
+  ticketBudgetLabel: {
+
+    fontSize: 9,
+
+    fontWeight: '700',
+
+    color: '#0EA5E9',
+
+    letterSpacing: 0.6,
+
+  },
+
+  ticketBudgetRange: {
+
+    fontSize: 13,
+
+    fontWeight: '800',
+
+    color: '#0F1D3B',
+
+    marginBottom: 4,
+
+  },
+
+  ticketBudgetNoteRow: {
+
+    flexDirection: 'row',
+
+    alignItems: 'flex-start',
+
+    gap: 4,
+
+    marginBottom: 1,
+
+  },
+
+  ticketBudgetDot: {
+
+    fontSize: 10,
+
+    color: '#64748B',
+
+    lineHeight: 16,
+
+  },
+
+  ticketBudgetNoteText: {
+
+    fontSize: 10,
+
+    color: '#64748B',
+
+    flex: 1,
+
+    lineHeight: 16,
+
+  },
+
+  ticketBarcodeRow: {
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
+
+    alignItems: 'center',
+
+    borderTopWidth: 0.8,
+
+    borderTopColor: '#E0E8F5',
+
+    paddingTop: 8,
+
+  },
+
+  ticketBarcodeContainer: {
+
+    flexDirection: 'row',
+
+    alignItems: 'flex-end',
+
+    gap: 1,
+
+    height: 18,
+
+  },
+
+  ticketBarcodeLine: {
+
+    borderRadius: 0.5,
+
+  },
+
+  ticketStatusBadge: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    borderWidth: 1,
+
+    borderRadius: 12,
+
+    paddingHorizontal: 10,
+
+    paddingVertical: 4,
+
+    gap: 4,
+
+  },
+
+  ticketStatusDot: {
+
+    width: 5,
+
+    height: 5,
+
+    borderRadius: 2.5,
+
+  },
+
+  ticketStatusTextSmall: {
+
+    fontSize: 9,
+
+    fontWeight: '800',
+
+    letterSpacing: 0.6,
+
+  },
+
+  ticketShell: {
+
+    flexDirection: 'row',
+
+    minHeight: 212,
+
+  },
+
+  ticketMainSection: {
+
+    flex: 1,
+
+    paddingHorizontal: 18,
+
+    paddingVertical: 16,
+
+    backgroundColor: '#FFFFFF',
+
+  },
+
+  ticketTitle: {
+
+    fontSize: 20,
+
+    fontWeight: '800',
+
+    color: '#0F1D3B',
+
+    lineHeight: 26,
+
+    marginBottom: 14,
+
+  },
+
+  ticketDetailsContainer: {
+
+    gap: 10,
+
+    marginBottom: 14,
+
+  },
+
+  ticketInfoRow: {
+
+    flexDirection: 'row',
+
+    alignItems: 'flex-start',
+
+    gap: 10,
+
+  },
+
+  ticketIconBox: {
+
+    width: 32,
+
+    height: 20,
+
+    borderRadius: 10,
+
+    backgroundColor: ranaColors.primary,
+
+    justifyContent: 'center',
+
+    alignItems: 'center',
+
+    marginTop: 1,
+
+  },
+
+  ticketInfoContent: {
+
+    flex: 1,
+
+    justifyContent: 'center',
+
+  },
+
+  ticketInfoLabel: {
+
+    fontSize: 9,
+
+    fontWeight: '700',
+
+    color: ranaColors.textSecondary,
+
+    letterSpacing: 0.8,
+
+    marginBottom: 2,
+
+  },
+
+  ticketInfoText: {
+
+    fontSize: 13,
+
+    fontWeight: '600',
+
+    color: ranaColors.textPrimary,
+
+    lineHeight: 18,
+
+  },
+
+  ticketCostSection: {
+
+    backgroundColor: '#F0F4FF',
+
+    paddingHorizontal: 14,
+
+    paddingVertical: 14,
+
+    borderRadius: 14,
+
+    marginBottom: 12,
+
+    borderLeftWidth: 4,
+
+    borderLeftColor: ranaColors.primary,
+
+  },
+
+  ticketCostLabel: {
+
+    fontSize: 9,
+
+    fontWeight: '800',
+
+    color: ranaColors.textSecondary,
+
+    letterSpacing: 1.2,
+
+    marginBottom: 6,
+
+  },
+
+  ticketCostValue: {
+
+    fontSize: 28,
+
+    fontWeight: '900',
+
+    color: ranaColors.primary,
+
+    lineHeight: 34,
+
+  },
+
+  ticketFooterRow: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    justifyContent: 'space-between',
+
+    gap: 10,
+
+  },
+
+  ticketStatusBadgeLegacy: {
+
+    backgroundColor: '#E8EFF9',
+
+    paddingHorizontal: 11,
+
+    paddingVertical: 6,
+
+    borderRadius: 8,
+
+    borderWidth: 1,
+
+    borderColor: '#D0DCF2',
+
+  },
+
+  ticketStatusText: {
+
+    fontSize: 9,
+
+    fontWeight: '800',
+
+    color: '#1B2B59',
+
+    letterSpacing: 1,
+
+  },
+
+  ticketCodeText: {
+
+    fontSize: 11,
+
+    fontWeight: '700',
+
+    color: ranaColors.textSecondary,
+
+    letterSpacing: 0.5,
+
+  },
+
+  ticketDividerSection: {
+
+    width: 1,
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+    backgroundColor: '#F0F4FF',
+
+    position: 'relative',
+
+  },
+
+  ticketDividerDashed: {
+
+    width: 1,
+
+    flex: 1,
+
+    height: 1,
+
+    borderLeftWidth: 1,
+
+    borderStyle: 'dashed',
+
+    borderColor: '#D0DCF2',
+
+  },
+
+  ticketCutTop: {
+
+    position: 'absolute',
+
+    top: -10,
+
+    width: 20,
+
+    height: 20,
+
+    borderRadius: 10,
+
+    backgroundColor: ranaColors.backgroundTop,
+
+  },
+
+  ticketCutBottom: {
+
+    position: 'absolute',
+
+    bottom: -10,
+
+    width: 20,
+
+    height: 20,
+
+    borderRadius: 10,
+
+    backgroundColor: ranaColors.backgroundTop,
+
+  },
+
+  ticketPunchHole: {
+
+    position: 'absolute',
+
+    width: 8,
+
+    height: 8,
+
+    borderRadius: 4,
+
+    backgroundColor: '#DCE5F6',
+
+    top: '50%',
+
+    marginTop: -4,
+
+  },
+
+  ticketAdmitText: {
+
+    position: 'absolute',
+
+    left: -22,
+
+    top: '50%',
+
+    marginTop: -30,
+
+    transform: [{ rotate: '-90deg' }],
+
+    fontSize: 9,
+
+    letterSpacing: 2,
+
+    fontWeight: '700',
+
+    color: '#7D8BAB',
+
+  },
+
+  ticketStubSection: {
+
+    width: '28%',
+
+    paddingVertical: 14,
+
+    paddingHorizontal: 10,
+
+    justifyContent: 'center',
+
+    alignItems: 'center',
+
+    backgroundColor: '#FAFCFF',
+
+  },
+
+  ticketQrBox: {
+
+    width: 60,
+
+    height: 60,
+
+    borderRadius: 8,
+
+    borderWidth: 1.5,
+
+    borderColor: '#D0DCF2',
+
+    backgroundColor: '#FFFFFF',
+
+    position: 'relative',
+
+    marginBottom: 10,
+
+  },
+
+  ticketQrCell: {
+
+    position: 'absolute',
+
+    width: 14,
+
+    height: 14,
+
+    backgroundColor: '#C7D3EC',
+
+    borderRadius: 2,
+
+  },
+
+  ticketQrCellDark: {
+
+    backgroundColor: '#243B6A',
+
+  },
+
+  ticketQrPos1: { top: 6, left: 6 },
+
+  ticketQrPos2: { top: 6, right: 6 },
+
+  ticketQrPos3: { top: 23, left: 23 },
+
+  ticketQrPos4: { bottom: 6, left: 6 },
+
+  ticketQrPos5: { bottom: 6, right: 6 },
+
+  ticketQrPos6: { top: 23, right: 6 },
+
+  ticketStubLabel: {
+
+    fontSize: 9,
+
+    fontWeight: '800',
+
+    color: '#334C7A',
+
+    letterSpacing: 0.5,
+
+    marginBottom: 3,
+
+  },
+
+  ticketStubSeat: {
+
+    fontSize: 9,
+
+    fontWeight: '700',
+
+    color: '#5A6D95',
+
+    textTransform: 'uppercase',
+
+  },
+
+  ticketBottomMeta: {
+
+    marginTop: 10,
+
+    paddingTop: 10,
+
+    borderTopWidth: 1,
+
+    borderColor: '#E8EEF9',
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    justifyContent: 'space-between',
+
+    gap: 8,
+
+  },
+
+  ticketMiniPill: {
+
+    paddingHorizontal: 10,
+
+    paddingVertical: 4,
+
+    borderRadius: 999,
+
+    backgroundColor: '#EAF0FD',
+
+  },
+
+  ticketMiniPillText: {
+
+    fontSize: 10,
+
+    fontWeight: '800',
+
+    color: '#1B2B59',
+
+    letterSpacing: 0.5,
+
+  },
+
+  upcomingCostText: {
+
+    fontSize: 11,
+
+    fontWeight: '700',
+
+    color: ranaColors.primary,
+
+  },
+
+  ticketHeaderDestination: {
+
+    fontSize: 22,
+
+    fontWeight: '800',
+
+    color: '#fff',
+
+    letterSpacing: 0.5,
+
+  },
+
+  ticketHeaderCountry: {
+
+    fontSize: 12,
+
+    fontWeight: '600',
+
+    color: 'rgba(255,255,255,0.78)',
+
+    marginTop: 3,
+
+  },
+
+  carouselDots: {
+
+    flexDirection: 'row',
+
+    justifyContent: 'center',
+
+    alignItems: 'center',
+
+    marginTop: 24,
+
+    marginBottom: 8,
+
+    gap: 6,
+
+  },
+
+  carouselDot: {
+
+    width: 6,
+
+    height: 6,
+
+    borderRadius: 3,
+
+    backgroundColor: '#D6E0F5',
+
+  },
+
+  carouselDotActive: {
+
+    width: 18,
+
+    backgroundColor: ranaColors.primary,
+
+  },
+
+
+
+  destinationHeader: {
+
+    marginTop: 130,
+
+    marginBottom: 16,
+
+  },
+
+  destinationTitle: {
+
+    fontSize: 28,
+
+    fontWeight: '800',
+
+    color: ranaColors.textPrimary,
+
+  },
+
+
+
+  // Calendar Timeline styles
+
+  calendarSection: {
+
+    marginTop: 16,
+
+    marginBottom: 8,
+
+  },
+
+  calendarScroll: {
+
+    gap: 12,
+
+    paddingBottom: 8,
+
+  },
+
+  calDayBox: {
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+    width: 54,
+
+    height: 74,
+
+    borderRadius: 16,
+
+    backgroundColor: '#FFFFFF',
+
+    ...ranaShadow.card,
+
+  },
+
+  calDayToday: {
+
+    backgroundColor: ranaColors.primary,
+
+  },
+
+  calDayLabel: {
+
+    fontSize: 11,
+
+    color: ranaColors.textSecondary,
+
+    marginBottom: 4,
+
+  },
+
+  calDayNumber: {
+
+    fontSize: 16,
+
+    fontWeight: '700',
+
+    color: ranaColors.textPrimary,
+
+    marginBottom: 4,
+
+  },
+
+  calDayTodayText: {
+
+    color: '#FFFFFF',
+
+  },
+
+  calDot: {
+
+    width: 6,
+
+    height: 6,
+
+    borderRadius: 3,
+
+  },
+
+  calLegendRow: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    marginTop: 8,
+
+  },
+
+  calDotLegend: {
+
+    width: 10,
+
+    height: 10,
+
+    borderRadius: 5,
+
+    marginRight: 6,
+
+  },
+
+  calLegendText: {
+
+    fontSize: 12,
+
+    color: ranaColors.textSecondary,
+
+  },
+
+
+
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Header ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+  topRow: {
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
+
+    alignItems: 'center',
+
+    marginBottom: ranaSpacing.sm,
+
+  },
+
+  logoTitle: { fontSize: 24, fontWeight: '800', color: ranaColors.textPrimary },
+
+  tagline: { fontSize: 14, color: ranaColors.textSecondary, marginTop: 2 },
+
+
+
+  greetingCard: {
+
+    backgroundColor: ranaColors.card, borderRadius: ranaRadius.lg,
+
+    padding: ranaSpacing.md, marginTop: ranaSpacing.xs,
+
+    marginBottom: ranaSpacing.sm, ...ranaShadow.card,
+
+  },
+
+  greetingTitle: { fontSize: 20, fontWeight: '700', color: ranaColors.textPrimary, marginBottom: ranaSpacing.xs },
+
+  greetingBody: { fontSize: 14, color: ranaColors.textSecondary, lineHeight: 20 },
+
+
+
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Stats ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+  statsRow: { flexDirection: 'row', gap: ranaSpacing.sm, marginBottom: ranaSpacing.sm },
+
+  statCard: {
+
+    flex: 1, backgroundColor: ranaColors.card,
+
+    borderRadius: ranaRadius.md, padding: ranaSpacing.sm, ...ranaShadow.soft,
+
+  },
+
+  statLabel: { fontSize: 13, color: ranaColors.textSecondary },
+
+  statValue: { marginTop: 6, fontSize: 18, fontWeight: '700', color: ranaColors.textPrimary },
+
+
+
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Weather ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+  weatherCard: {
+
+    backgroundColor: ranaColors.card, borderRadius: ranaRadius.md,
+
+    padding: ranaSpacing.sm, flexDirection: 'row', alignItems: 'center',
+
+    justifyContent: 'space-between', marginBottom: ranaSpacing.sm, ...ranaShadow.soft,
+
+  },
+
+  sectionHeading: { fontSize: 16, fontWeight: '600', color: ranaColors.textPrimary },
+
+  weatherText: { marginTop: 4, fontSize: 14, color: ranaColors.textSecondary },
+
+
+
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Heatmap ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+  heatmapCard: {
+
+    backgroundColor: ranaColors.card, borderRadius: ranaRadius.md,
+
+    padding: ranaSpacing.sm, marginBottom: ranaSpacing.md, ...ranaShadow.soft,
+
+  },
+
+  heatGrid: { marginTop: ranaSpacing.xs, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+
+  heatCell: { width: 16, height: 16, borderRadius: 6 },
+
+
+
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Discover header ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+  discoverHeader: { marginBottom: ranaSpacing.sm },
+
+  discoverTitle: { fontSize: 20, fontWeight: '800', color: ranaColors.textPrimary },
+
+  discoverSubtitle: { fontSize: 13, color: ranaColors.textSecondary, marginTop: 3 },
+
+
+
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Filter chips ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+  filterRow: { gap: 8, paddingBottom: ranaSpacing.sm },
+
+  filterChip: {
+
+    paddingHorizontal: 16, paddingVertical: 8,
+
+    borderRadius: ranaRadius.pill,
+
+    backgroundColor: ranaColors.card,
+
+    borderWidth: 1.5, borderColor: ranaColors.accent,
+
+  },
+
+  filterChipActive: { backgroundColor: ranaColors.primary, borderColor: ranaColors.primary },
+
+  filterChipText: { fontSize: 13, fontWeight: '600', color: ranaColors.textSecondary },
+
+  filterChipTextActive: { color: '#fff' },
+
+
+
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Destination card ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+  destCard: {
+
+    backgroundColor: ranaColors.card,
+
+    borderRadius: ranaRadius.lg,
+
+    marginBottom: ranaSpacing.sm,
+
+    overflow: 'hidden',
+
+    ...ranaShadow.card,
+
+  },
+
+  destImage: {
+
+    width: '100%',
+
+    height: 200,
+
+    justifyContent: 'flex-end',
+
+  },
+
+  destImageOverlay: {
+
+    flex: 1,
+
+    borderRadius: ranaRadius.lg,
+
+    padding: 14,
+
+    justifyContent: 'space-between',
+
+    alignItems: 'flex-start',
+
+  },
+
+  destTag: {
+
+    paddingHorizontal: 10,
+
+    paddingVertical: 4,
+
+    borderRadius: ranaRadius.pill,
+
+  },
+
+  destTagText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+
+  destImageBottom: { width: '100%' },
+
+  destNameOnImage: { fontSize: 20, fontWeight: '800', color: '#fff' },
+
+  destLocationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+
+  destLocationText: { fontSize: 12, color: 'rgba(255,255,255,0.85)' },
+
+
+
+  // Info chips row
+
+  destInfoRow: {
+
+    flexDirection: 'row',
+
+    flexWrap: 'wrap',
+
+    justifyContent: 'space-between', // Use space-between for better distribution
+
+    gap: 8, // Reset gap to a reasonable value
+
+    paddingHorizontal: 14,
+
+    paddingTop: 12,
+
+  },
+
+  destInfoChip: {
+
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    gap: 5,
+
+    backgroundColor: ranaColors.accent,
+
+    paddingHorizontal: 10,
+
+    paddingVertical: 6,
+
+    borderRadius: ranaRadius.pill,
+
+  },
+
+  destInfoChipText: { fontSize: 12, fontWeight: '600', color: ranaColors.textPrimary },
+
+
+
+  // Description
+
+  destDescription: {
+
+    fontSize: 13,
+
+    color: ranaColors.textSecondary,
+
+    lineHeight: 20,
+
+    paddingHorizontal: 14,
+
+    paddingTop: 10,
+
+  },
+
+  destExpandRow: { paddingHorizontal: 14, paddingVertical: 10 },
+
+  destExpandHint: { fontSize: 12, fontWeight: '600', color: ranaColors.primary },
+
+  // Calendar button
+  calendarBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: ranaColors.accent,
+  },
+  calendarBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: ranaColors.primary,
+  },
+
+  // Weather card row (replaces dashboard header)
+  weatherCardRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: -15,
+    marginBottom: 20,
+  },
+
+  // Calendar Modal
+  calendarOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  calendarModal: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '80%',
+    paddingBottom: 32,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8EEF9',
+  },
+  calendarTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: ranaColors.textPrimary,
+  },
+  calendarCloseBtn: {
+    padding: 4,
+  },
+  calendarEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    gap: 12,
+  },
+  calendarEmptyText: {
+    fontSize: 15,
+    color: ranaColors.textSecondary,
+    fontWeight: '600',
+  },
+  calendarList: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  calendarTripItem: {
+    flexDirection: 'row',
+    paddingVertical: 14,
+  },
+  calendarTripPast: {
+    opacity: 0.55,
+  },
+  calendarTripDotWrap: {
+    width: 24,
+    alignItems: 'center',
+    paddingTop: 4,
+  },
+  calendarTripDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: ranaColors.primary,
+  },
+  calendarTripLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#D6E0F5',
+    marginTop: 4,
+  },
+  calendarTripContent: {
+    flex: 1,
+    marginLeft: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F4FF',
+  },
+  calendarTripName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: ranaColors.textPrimary,
+    marginBottom: 6,
+  },
+  calendarTripNamePast: {
+    color: ranaColors.textSecondary,
+  },
+  calendarTripDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 3,
+  },
+  calendarTripDate: {
+    fontSize: 13,
+    color: ranaColors.primary,
+    fontWeight: '600',
+  },
+  calendarTripDateEnd: {
+    fontSize: 13,
+    color: ranaColors.textSecondary,
+    fontWeight: '600',
+  },
+  calendarTripMetaRow: {
     flexDirection: 'row',
     gap: 8,
+    marginTop: 6,
   },
+  calendarTripChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: ranaColors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  calendarTripChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#fff',
+  },
+
 });
+
