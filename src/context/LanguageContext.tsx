@@ -71,7 +71,7 @@ const translations: Record<string, Translations> = {
     discoverSubtitle:    'Ideas for your next Philippine adventure',
     readMore:            'Read more ↓',
     showLess:            'Show less ↑',
-    myTrips:             'My Trips',
+    myTrips:             'Airplaine Trips',
     myTripsSubtitle:     'Track every route and memory in one place.',
     totalKmTraveled:     'Total km traveled',
     totalTrips:          'Total trips',

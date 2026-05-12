@@ -17,10 +17,9 @@ import { router } from 'expo-router';
 import { useTravel, type TransportCategory } from '@/src/context/TravelContext';
 import { ranaColors, ranaRadius, ranaShadow, ranaSpacing } from '@/src/theme/ranaTheme';
 import Stepper from '@/src/components/Stepper';
-import LeafletMap from '@/src/components/LeafletMap';
+import RoutePickerModal from '@/src/components/RoutePickerModal';
 
 const TRANSPORT_OPTIONS: TransportCategory[] = [
-  'Jeep', 'Bus', 'Train/LRT/MRT', 'Motor', 'Car/Taxi',
   'Local Airplane', 'International Airplane',
 ];
 const TRANSPORT_ICONS: Record<TransportCategory, string> = {
@@ -31,7 +30,14 @@ const TRANSPORT_ICONS: Record<TransportCategory, string> = {
   'Car/Taxi': 'car',
   'Local Airplane': 'airplane',
   'International Airplane': 'airplane-outline',
+  Ferry: 'boat',
+  FastCraft: 'speedometer-outline',
+  Bangka: 'sailboat',
+  Cruise: 'wine-outline',
 };
+
+const SEAT_CLASSES = ['Economy', 'Premium Economy', 'Business', 'First'] as const;
+type SeatClass = typeof SEAT_CLASSES[number];
 
 function formatPHP(v: number) {
   return new Intl.NumberFormat('en-PH', {
@@ -43,11 +49,11 @@ export default function NewTripScreen() {
   const { addTrip, estimateFare } = useTravel();
 
   const [title, setTitle] = useState('');
-  const [status, setStatus] = useState<'planned' | 'completed' | 'cancelled'>('planned');
+  const [status, setStatus] = useState<'planned' | 'confirmed' | 'completed' | 'cancelled'>('planned');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [description, setDescription] = useState('');
-  const [transport, setTransport] = useState<TransportCategory>('Jeep');
+  const [transport, setTransport] = useState<TransportCategory>('Local Airplane');
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [country, setCountry] = useState('Philippines');
@@ -58,6 +64,13 @@ export default function NewTripScreen() {
   const [budgetNotesRaw, setBudgetNotesRaw] = useState('');
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const locationWatcher = useRef<any>(null);
+  // Air-specific
+  const [airline, setAirline] = useState('');
+  const [flightNumber, setFlightNumber] = useState('');
+  const [seatClass, setSeatClass] = useState<SeatClass>('Economy');
+  const [terminal, setTerminal] = useState('');
+  const [layover, setLayover] = useState('');
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   const distance = parseFloat(distanceKm) || 0;
   const pax = parseInt(passengers, 10) || 1;
@@ -111,7 +124,14 @@ export default function NewTripScreen() {
       title: title.trim() || undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
-      description: description || undefined,
+      description: [
+        description,
+        airline ? `Airline: ${airline}` : '',
+        flightNumber ? `Flight: ${flightNumber}` : '',
+        seatClass ? `Seat: ${seatClass}` : '',
+        terminal ? `Terminal: ${terminal}` : '',
+        layover ? `Layover: ${layover}` : '',
+      ].filter(Boolean).join(' | ') || undefined,
       status,
       durationDays,
       budgetRange: budgetRange.trim() || undefined,
@@ -124,15 +144,15 @@ export default function NewTripScreen() {
 
   const step1 = (
     <ScrollView style={styles.stepScroll} contentContainerStyle={styles.stepContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-      <Text style={styles.stepHeading}>{"What's the trip?"}</Text>
-      <Text style={styles.stepSub}>Give your trip a name and status.</Text>
+      <Text style={styles.stepHeading}>{"What's the flight?"}</Text>
+      <Text style={styles.stepSub}>Give your flight a name and set its status.</Text>
       <Text style={styles.label}>Trip Title</Text>
-      <TextInput style={styles.input} placeholder="e.g. Seoul Food and Cafe Week" placeholderTextColor={ranaColors.muted} value={title} onChangeText={setTitle} />
+      <TextInput style={styles.input} placeholder="e.g. Cebu Getaway, Seoul Layover" placeholderTextColor={ranaColors.muted} value={title} onChangeText={setTitle} />
       <Text style={styles.label}>Status</Text>
       <View style={styles.chipRow}>
-        {(['planned', 'completed', 'cancelled'] as const).map((s) => (
+        {(['planned', 'confirmed', 'completed', 'cancelled'] as const).map((s) => (
           <TouchableOpacity key={s} style={[styles.chip, status === s && styles.chipActive]} onPress={() => setStatus(s)} activeOpacity={0.75}>
-            <Ionicons name={s === 'planned' ? 'time-outline' : s === 'completed' ? 'checkmark-circle-outline' : 'close-circle-outline'} size={14} color={status === s ? '#fff' : ranaColors.textSecondary} />
+            <Ionicons name={s === 'planned' ? 'time-outline' : s === 'confirmed' ? 'checkmark-outline' : s === 'completed' ? 'checkmark-circle-outline' : 'close-circle-outline'} size={14} color={status === s ? '#fff' : ranaColors.textSecondary} />
             <Text style={[styles.chipText, status === s && styles.chipTextActive]}>{s.charAt(0).toUpperCase() + s.slice(1)}</Text>
           </TouchableOpacity>
         ))}
@@ -167,48 +187,35 @@ export default function NewTripScreen() {
 
   const step3 = (
     <ScrollView style={styles.stepScroll} contentContainerStyle={styles.stepContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-      <Text style={styles.stepHeading}>Where to?</Text>
-      <Text style={styles.stepSub}>Pick transport, set your route, and tap the map.</Text>
-      <View style={styles.mapWrap}>
-        {coords ? (
-          <LeafletMap
-            lat={coords.lat}
-            lng={coords.lng}
-            zoom={14}
-            style={{ borderRadius: ranaRadius.md }}
-            onTap={async (lat, lng) => {
-              // Reverse geocode via Nominatim to get a readable place name
-              let label = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-              try {
-                const res = await fetch(
-                  `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-                  { headers: { 'Accept-Language': 'en', 'User-Agent': 'RANATravelApp/1.0' } }
-                );
-                const data = await res.json();
-                if (data?.address) {
-                  const a = data.address;
-                  label = [a.road || a.suburb || a.neighbourhood, a.city || a.town || a.municipality || a.county, a.country]
-                    .filter(Boolean).join(', ');
-                }
-              } catch {}
-              if (!origin) setOrigin(label);
-              else if (!destination) setDestination(label);
-              else { setOrigin(''); setDestination(''); }
-            }}
-            onRoute={(distanceM) => {
-              const km = (distanceM / 1000).toFixed(1);
-              setDistanceKm(km);
-            }}
-          />
-        ) : (
-          <View style={styles.mapPlaceholder}>
-            <Ionicons name="location-outline" size={28} color={ranaColors.muted} />
-            <Text style={styles.mapPlaceholderText}>Getting your location...</Text>
+      <Text style={styles.stepHeading}>Flight details</Text>
+      <Text style={styles.stepSub}>Route, airline info, and cost.</Text>
+
+      {/* Angkas-style map picker */}
+      <TouchableOpacity style={styles.mapPickerBtn} onPress={() => setShowMapPicker(true)} activeOpacity={0.8}>
+        <View style={styles.mapPickerInner}>
+          <Ionicons name="map" size={22} color={ranaColors.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.mapPickerTitle}>Select on Map</Text>
+            {origin && destination ? (
+              <Text style={styles.mapPickerRoute} numberOfLines={1}>{origin}  →  {destination}</Text>
+            ) : (
+              <Text style={styles.mapPickerSub}>Tap to pick pickup & drop-off like Angkas</Text>
+            )}
           </View>
-        )}
-      </View>
-      <Text style={styles.label}>Transport</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          {origin && destination
+            ? <Ionicons name="checkmark-circle" size={20} color="#22C55E" />
+            : <Ionicons name="chevron-forward" size={18} color={ranaColors.muted} />}
+        </View>
+        {distanceKm ? (
+          <View style={styles.mapPickerDistPill}>
+            <Ionicons name="resize-outline" size={12} color={ranaColors.primary} />
+            <Text style={styles.mapPickerDistText}>{distanceKm} km</Text>
+          </View>
+        ) : null}
+      </TouchableOpacity>
+
+      <Text style={styles.label}>Flight Type</Text>
+      <View style={styles.chipRow}>
         {TRANSPORT_OPTIONS.map((opt) => {
           const active = opt === transport;
           return (
@@ -218,19 +225,52 @@ export default function NewTripScreen() {
             </TouchableOpacity>
           );
         })}
-      </ScrollView>
+      </View>
+
       <View style={styles.row}>
         <View style={styles.halfWrap}>
-          <Text style={styles.label}>From</Text>
-          <TextInput style={styles.input} placeholder="e.g. Cubao, QC" placeholderTextColor={ranaColors.muted} value={origin} onChangeText={setOrigin} />
+          <Text style={styles.label}>From (Airport / City)</Text>
+          <TextInput style={styles.input} placeholder="e.g. NAIA Terminal 1" placeholderTextColor={ranaColors.muted} value={origin} onChangeText={setOrigin} />
         </View>
         <View style={styles.halfWrap}>
-          <Text style={styles.label}>To</Text>
-          <TextInput style={styles.input} placeholder="e.g. Seoul" placeholderTextColor={ranaColors.muted} value={destination} onChangeText={setDestination} />
+          <Text style={styles.label}>To (Airport / City)</Text>
+          <TextInput style={styles.input} placeholder="e.g. Incheon, Seoul" placeholderTextColor={ranaColors.muted} value={destination} onChangeText={setDestination} />
         </View>
       </View>
+
       <Text style={styles.label}>Country</Text>
       <TextInput style={styles.input} placeholder="Philippines" placeholderTextColor={ranaColors.muted} value={country} onChangeText={setCountry} />
+
+      <View style={styles.row}>
+        <View style={styles.halfWrap}>
+          <Text style={styles.label}>Airline</Text>
+          <TextInput style={styles.input} placeholder="e.g. Cebu Pacific" placeholderTextColor={ranaColors.muted} value={airline} onChangeText={setAirline} />
+        </View>
+        <View style={styles.halfWrap}>
+          <Text style={styles.label}>Flight No.</Text>
+          <TextInput style={styles.input} placeholder="e.g. 5J123" placeholderTextColor={ranaColors.muted} value={flightNumber} onChangeText={setFlightNumber} />
+        </View>
+      </View>
+
+      <Text style={styles.label}>Seat Class</Text>
+      <View style={styles.chipRow}>
+        {SEAT_CLASSES.map((sc) => (
+          <TouchableOpacity key={sc} style={[styles.chip, seatClass === sc && styles.chipActive]} onPress={() => setSeatClass(sc)} activeOpacity={0.75}>
+            <Text style={[styles.chipText, seatClass === sc && styles.chipTextActive]}>{sc}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text style={styles.label}>Terminal / Gate (optional)</Text>
+      <TextInput style={styles.input} placeholder="e.g. NAIA T3, Gate 12" placeholderTextColor={ranaColors.muted} value={terminal} onChangeText={setTerminal} />
+
+      {transport === 'International Airplane' && (
+        <>
+          <Text style={styles.label}>Layover / Stopover (optional)</Text>
+          <TextInput style={styles.input} placeholder="e.g. 3h layover at Hong Kong" placeholderTextColor={ranaColors.muted} value={layover} onChangeText={setLayover} />
+        </>
+      )}
+
       <View style={styles.row}>
         <View style={styles.halfWrap}>
           <Text style={styles.label}>Distance (km)</Text>
@@ -245,7 +285,7 @@ export default function NewTripScreen() {
       <Text style={styles.label}>Actual / Planned Cost (PHP)</Text>
       <TextInput
         style={styles.input}
-        placeholder={estimated > 0 ? `Auto-estimated: ${formatPHP(estimated)}` : 'e.g. 90000'}
+        placeholder={estimated > 0 ? `Auto-estimated: ${formatPHP(estimated)}` : 'e.g. 6500'}
         placeholderTextColor={ranaColors.muted}
         value={manualCost}
         onChangeText={setManualCost}
@@ -261,7 +301,7 @@ export default function NewTripScreen() {
       <Text style={styles.label}>Budget Range</Text>
       <TextInput
         style={styles.input}
-        placeholder="e.g. ₱90,000 – ₱180,000"
+        placeholder="e.g. ₱6,000 – ₱12,000"
         placeholderTextColor={ranaColors.muted}
         value={budgetRange}
         onChangeText={setBudgetRange}
@@ -270,7 +310,7 @@ export default function NewTripScreen() {
       <Text style={styles.label}>Budget Notes (one per line)</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder={'Cheaper flights (promo possible)\nFood + attractions reasonable'}
+        placeholder={'Promo fare possible\nHotel separate'}
         placeholderTextColor={ranaColors.muted}
         value={budgetNotesRaw}
         onChangeText={setBudgetNotesRaw}
@@ -283,16 +323,21 @@ export default function NewTripScreen() {
 
   const step4 = (
     <ScrollView style={styles.stepScroll} contentContainerStyle={styles.stepContent} showsVerticalScrollIndicator={false}>
-      <Text style={styles.stepHeading}>Review & Save</Text>
-      <Text style={styles.stepSub}>Double-check your trip details below.</Text>
+      <Text style={styles.reviewRow && styles.stepHeading ? styles.stepHeading : styles.stepHeading}>Review & Save</Text>
+      <Text style={styles.stepSub}>Double-check your flight details below.</Text>
       <View style={styles.reviewCard}>
         <ReviewRow icon="bookmark-outline" label="Title" value={title || '—'} />
         <ReviewRow icon="flag-outline" label="Status" value={status} />
         <ReviewRow icon="calendar-outline" label="Dates" value={startDate && endDate ? `${startDate} to ${endDate}` : startDate || '—'} />
         {durationDays !== undefined && <ReviewRow icon="time-outline" label="Duration" value={`${durationDays} day${durationDays > 1 ? 's' : ''}`} />}
-        <ReviewRow icon="navigate-outline" label="Route" value={origin && destination ? `${origin} to ${destination}` : '—'} />
+        <ReviewRow icon="navigate-outline" label="Route" value={origin && destination ? `${origin} → ${destination}` : '—'} />
         <ReviewRow icon="earth-outline" label="Country" value={country || '—'} />
-        <ReviewRow icon={TRANSPORT_ICONS[transport] as any} label="Transport" value={transport} />
+        <ReviewRow icon={TRANSPORT_ICONS[transport] as any} label="Flight Type" value={transport} />
+        {airline ? <ReviewRow icon="business-outline" label="Airline" value={airline} /> : null}
+        {flightNumber ? <ReviewRow icon="barcode-outline" label="Flight No." value={flightNumber} /> : null}
+        <ReviewRow icon="star-outline" label="Seat Class" value={seatClass} />
+        {terminal ? <ReviewRow icon="exit-outline" label="Terminal" value={terminal} /> : null}
+        {layover ? <ReviewRow icon="git-branch-outline" label="Layover" value={layover} /> : null}
         <ReviewRow icon="resize-outline" label="Distance" value={distance > 0 ? `${distance} km` : '—'} />
         <ReviewRow icon="people-outline" label="Passengers" value={String(pax)} />
         {description ? <ReviewRow icon="document-text-outline" label="Notes" value={description} /> : null}
@@ -332,7 +377,7 @@ export default function NewTripScreen() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backHeaderBtn}>
             <Ionicons name="chevron-back" size={22} color={ranaColors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New Trip</Text>
+          <Text style={styles.headerTitle}>New Flight</Text>
           <View style={{ width: 36 }} />
         </View>
         <Stepper
@@ -348,6 +393,18 @@ export default function NewTripScreen() {
           completeButtonText="Save Trip"
         />
       </KeyboardAvoidingView>
+      <RoutePickerModal
+        visible={showMapPicker}
+        onClose={() => setShowMapPicker(false)}
+        accentColor={ranaColors.primary}
+        pickupLabel="From Airport / City"
+        dropoffLabel="To Airport / City"
+        onConfirm={(r) => {
+          setOrigin(r.origin);
+          setDestination(r.destination);
+          setDistanceKm(r.distanceKm.toFixed(1));
+        }}
+      />
     </LinearGradient>
   );
 }
@@ -462,22 +519,53 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   infoPillText: { fontSize: 12, fontWeight: '700', color: ranaColors.primary },
-  mapWrap: {
-    height: 200,
-    borderRadius: ranaRadius.md,
-    overflow: 'hidden',
-    marginTop: 12,
-    marginBottom: 4,
-    ...ranaShadow.soft,
-  },
-  mapPlaceholder: {
-    flex: 1,
+  mapPickerBtn: {
     backgroundColor: ranaColors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    borderRadius: ranaRadius.lg,
+    marginTop: 8,
+    marginBottom: 4,
+    borderWidth: 2,
+    borderColor: '#C8D5EC',
+    ...ranaShadow.soft,
+    overflow: 'hidden',
   },
-  mapPlaceholderText: { color: ranaColors.textSecondary, fontSize: 13 },
+  mapPickerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+  },
+  mapPickerTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: ranaColors.textPrimary,
+  },
+  mapPickerSub: {
+    fontSize: 12,
+    color: ranaColors.muted,
+    marginTop: 2,
+  },
+  mapPickerRoute: {
+    fontSize: 12,
+    color: ranaColors.textSecondary,
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  mapPickerDistPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#E1EEFF',
+    borderTopWidth: 1,
+    borderTopColor: '#C8D5EC',
+  },
+  mapPickerDistText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: ranaColors.primary,
+  },
   reviewCard: {
     backgroundColor: ranaColors.card,
     borderRadius: ranaRadius.lg,

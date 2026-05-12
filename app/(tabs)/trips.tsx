@@ -131,6 +131,13 @@ export default function MyTripsScreen() {
   const totalKm = trips.reduce((sum, trip) => sum + trip.distanceKm, 0);
   const countriesVisited = new Set(trips.map((trip) => trip.country.toLowerCase())).size;
   const totalSpent = trips.reduce((sum, trip) => sum + trip.totalCost, 0);
+  const avgCost = trips.length > 0 ? Math.round(totalSpent / trips.length) : 0;
+  const completedCount = trips.filter(t => t.status === 'completed').length;
+  const confirmedCount = trips.filter(t => t.status === 'confirmed').length;
+  const plannedCount = trips.filter(t => t.status !== 'completed' && t.status !== 'confirmed' && t.status !== 'cancelled').length;
+  const cancelledCount = trips.filter(t => t.status === 'cancelled').length;
+  const localFlights = trips.filter(t => t.transportType === 'Local Airplane').length;
+  const intlFlights = trips.filter(t => t.transportType === 'International Airplane').length;
   const sortedTrips = [...trips].sort(
     (a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime()
   );
@@ -254,50 +261,106 @@ export default function MyTripsScreen() {
             <Text style={styles.title}>{t.myTrips}</Text>
             <Text style={styles.subtitle}>{t.myTripsSubtitle}</Text>
 
-            <View style={styles.summaryRow}>
-              <View style={[styles.summaryCard, styles.summaryCardWide]}>
-                <View style={styles.summaryIconRow}>
-                  <View style={[styles.summaryIconWrap, { backgroundColor: '#E0F2FE' }]}>
-                    <Ionicons name="speedometer-outline" size={14} color="#0284C7" />
+            {/* Dashboard card */}
+            <View style={styles.dashCard}>
+              <Text style={styles.dashTitle}>Overview</Text>
+
+              {/* 4-metric row */}
+              <View style={styles.metricRow}>
+                <View style={styles.metricItem}>
+                  <View style={[styles.metricIcon, { backgroundColor: '#E0F2FE' }]}>
+                    <Ionicons name="speedometer-outline" size={13} color="#0284C7" />
                   </View>
-                  <Text style={styles.summaryLabel}>{t.totalKmTraveled}</Text>
+                  <Text style={styles.metricVal}>{totalKm.toFixed(0)}</Text>
+                  <Text style={styles.metricLbl}>km</Text>
                 </View>
-                <Text style={styles.summaryValue}>{totalKm.toFixed(1)} km</Text>
+                <View style={styles.metricSep} />
+                <View style={styles.metricItem}>
+                  <View style={[styles.metricIcon, { backgroundColor: '#DBEAFE' }]}>
+                    <Ionicons name="airplane-outline" size={13} color="#2563EB" />
+                  </View>
+                  <Text style={styles.metricVal}>{trips.length}</Text>
+                  <Text style={styles.metricLbl}>trips</Text>
+                </View>
+                <View style={styles.metricSep} />
+                <View style={styles.metricItem}>
+                  <View style={[styles.metricIcon, { backgroundColor: '#DCFCE7' }]}>
+                    <Ionicons name="globe-outline" size={13} color="#16A34A" />
+                  </View>
+                  <Text style={styles.metricVal}>{countriesVisited}</Text>
+                  <Text style={styles.metricLbl}>countries</Text>
+                </View>
+                <View style={styles.metricSep} />
+                <View style={styles.metricItem}>
+                  <View style={[styles.metricIcon, { backgroundColor: '#DBEAFE' }]}>
+                    <Ionicons name="checkmark-done-outline" size={13} color="#2563EB" />
+                  </View>
+                  <Text style={styles.metricVal}>{completedCount}</Text>
+                  <Text style={styles.metricLbl}>done</Text>
+                </View>
               </View>
 
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryIconRow}>
-                  <View style={[styles.summaryIconWrap, { backgroundColor: '#DBEAFE' }]}>
-                    <Ionicons name="airplane-outline" size={14} color="#2563EB" />
-                  </View>
-                  <Text style={styles.summaryLabel}>{t.totalTrips}</Text>
+              {/* Spend band */}
+              <View style={styles.spendBand}>
+                <View>
+                  <Text style={styles.spendLbl}>{t.totalSpend}</Text>
+                  <Text style={styles.spendVal}>{formatPHP(totalSpent)}</Text>
                 </View>
-                <Text style={styles.summaryValue}>{trips.length}</Text>
+                {avgCost > 0 && (
+                  <View style={styles.spendAvgWrap}>
+                    <Text style={styles.spendAvgLbl}>avg / trip</Text>
+                    <Text style={styles.spendAvgVal}>{formatPHP(avgCost)}</Text>
+                  </View>
+                )}
               </View>
 
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryIconRow}>
-                  <View style={[styles.summaryIconWrap, { backgroundColor: '#E0F2FE' }]}>
-                    <Ionicons name="globe-outline" size={14} color="#0284C7" />
-                  </View>
-                  <Text style={styles.summaryLabel}>{t.countriesVisited}</Text>
-                </View>
-                <Text style={styles.summaryValue}>{countriesVisited}</Text>
-              </View>
-            </View>
+              {/* Trip status breakdown */}
+              {trips.length > 0 && (
+                <>
+                  <View style={styles.dashDiv} />
+                  <Text style={styles.dashSubhead}>Trip Status</Text>
+                  {[
+                    { label: 'Completed', count: completedCount, color: '#16A34A' },
+                    { label: 'Confirmed', count: confirmedCount, color: '#2563EB' },
+                    { label: 'Planned', count: plannedCount, color: '#D97706' },
+                    { label: 'Cancelled', count: cancelledCount, color: '#DC2626' },
+                  ].filter(s => s.count > 0).map((s, i) => (
+                    <View key={i} style={styles.barRow}>
+                      <Text style={styles.barLbl}>{s.label}</Text>
+                      <View style={styles.barTrack}>
+                        <View style={{ flex: s.count / trips.length, backgroundColor: s.color, height: 6, borderRadius: 3 }} />
+                        <View style={{ flex: Math.max(0, 1 - s.count / trips.length) }} />
+                      </View>
+                      <Text style={styles.barCnt}>{s.count}</Text>
+                    </View>
+                  ))}
+                </>
+              )}
 
-            <View style={styles.totalSpendCard}>
-              <View style={styles.summaryIconRow}>
-                <View style={[styles.summaryIconWrap, { backgroundColor: '#DBEAFE' }]}>
-                  <Ionicons name="wallet-outline" size={14} color="#2563EB" />
-                </View>
-                <Text style={styles.totalSpendLabel}>{t.totalSpend}</Text>
-              </View>
-              <Text style={styles.totalSpendValue}>{formatPHP(totalSpent)}</Text>
+              {/* Flight type breakdown */}
+              {(localFlights > 0 || intlFlights > 0) && (
+                <>
+                  <View style={styles.dashDiv} />
+                  <Text style={styles.dashSubhead}>By Flight Type</Text>
+                  {[
+                    { label: 'Domestic', count: localFlights, color: ranaColors.primary },
+                    { label: "Int'l", count: intlFlights, color: '#0284C7' },
+                  ].filter(s => s.count > 0).map((s, i) => (
+                    <View key={i} style={styles.barRow}>
+                      <Text style={styles.barLbl}>{s.label}</Text>
+                      <View style={styles.barTrack}>
+                        <View style={{ flex: s.count / trips.length, backgroundColor: s.color, height: 6, borderRadius: 3 }} />
+                        <View style={{ flex: Math.max(0, 1 - s.count / trips.length) }} />
+                      </View>
+                      <Text style={styles.barCnt}>{s.count}</Text>
+                    </View>
+                  ))}
+                </>
+              )}
             </View>
 
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Recent Trip Scheduled</Text>
+              <Text style={styles.sectionTitle}>Scheduled Trips</Text>
               <TouchableOpacity
                 style={styles.memoriesBtn}
                 onPress={() => setMemoriesVisible(true)}
@@ -437,13 +500,34 @@ export default function MyTripsScreen() {
                   );
                 })()}
 
-                {/* Footer: date · cost · chevron */}
+                {/* Footer: date · cost · track · chevron */}
                 <View style={styles.footerRow}>
                   <Text style={styles.date}>
                     {new Date(item.dateISO).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </Text>
                   <View style={styles.footerRight}>
                     <Text style={styles.cost}>{formatPHP(item.totalCost)}</Text>
+                    <TouchableOpacity
+                      style={styles.trackBtn}
+                      onPress={(e) => {
+                        e.stopPropagation?.();
+                        router.push({
+                          pathname: '/map-view',
+                          params: {
+                            origin: item.origin,
+                            destination: item.destination,
+                            transport: item.transportType,
+                            title: item.title ?? '',
+                            distanceKm: String(item.distanceKm),
+                            totalCost: String(item.totalCost),
+                          },
+                        });
+                      }}
+                      activeOpacity={0.75}
+                    >
+                      <Ionicons name="map-outline" size={13} color={ranaColors.primary} />
+                      <Text style={styles.trackBtnText}>Track</Text>
+                    </TouchableOpacity>
                     <Ionicons name="chevron-forward" size={15} color="#C5D0E4" />
                   </View>
                 </View>
@@ -489,7 +573,7 @@ export default function MyTripsScreen() {
 
               <View style={styles.detailBody}>
               <ScrollView contentContainerStyle={styles.detailContent} showsVerticalScrollIndicator={false}>
-                <Text style={styles.detailRouteTitle}>{activeTrip.title?.trim() || `${activeTrip.destination} ✈`}</Text>
+                <Text style={styles.detailRouteTitle}>{activeTrip.title?.trim() || activeTrip.destination}</Text>
 
                 <Text style={styles.detailSubline}>
                   {tripRangeText(activeTrip)} · {tripDays.length} Day{tripDays.length > 1 ? 's' : ''} · {activeTrip.transportType}
@@ -623,7 +707,7 @@ export default function MyTripsScreen() {
                         </TouchableOpacity>
                       </View>
 
-                      <Text style={styles.timelineType}>{`${CATEGORY_EMOJI[entry.category]} ${entry.category}`}</Text>
+                      <Text style={styles.timelineType}>{entry.category}</Text>
                       <Text style={styles.timelineTitle}>{entry.title}</Text>
                       <Text style={styles.timelineLocation}>{`${entry.location}`}</Text>
                       <Text style={styles.timelineCost}>{entry.cost > 0 ? formatPHP(entry.cost) : 'Free'}</Text>
@@ -673,7 +757,7 @@ export default function MyTripsScreen() {
                               onPress={() => setFormCategory(cat)}
                               activeOpacity={0.75}
                             >
-                              <Text style={[styles.formCategoryText, active && styles.formCategoryTextActive]}>{`${CATEGORY_EMOJI[cat]} ${cat}`}</Text>
+                              <Text style={[styles.formCategoryText, active && styles.formCategoryTextActive]}>{cat}</Text>
                             </TouchableOpacity>
                           );
                         })}
@@ -851,6 +935,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: ranaColors.textSecondary,
   },
+  // Dashboard
+  dashCard: {
+    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 16, marginBottom: 16,
+    borderWidth: 1, borderColor: '#E8EEF9', ...ranaShadow.soft,
+  },
+  dashTitle: {
+    fontSize: 12, fontWeight: '700', color: ranaColors.textSecondary,
+    letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 14,
+  },
+  metricRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  metricItem: { flex: 1, alignItems: 'center', gap: 4 },
+  metricSep: { width: 1, height: 38, backgroundColor: '#E8EEF9' },
+  metricIcon: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  metricVal: { fontSize: 18, fontWeight: '800', color: ranaColors.textPrimary, lineHeight: 22 },
+  metricLbl: { fontSize: 10, fontWeight: '600', color: ranaColors.textSecondary },
+  spendBand: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#E1EEFF', borderRadius: 12, padding: 12, marginBottom: 2,
+  },
+  spendLbl: { fontSize: 11, color: ranaColors.textSecondary, fontWeight: '600' },
+  spendVal: { fontSize: 20, fontWeight: '800', color: ranaColors.textPrimary, marginTop: 2 },
+  spendAvgWrap: { alignItems: 'flex-end' },
+  spendAvgLbl: { fontSize: 10, color: ranaColors.textSecondary },
+  spendAvgVal: { fontSize: 13, fontWeight: '700', color: ranaColors.primary },
+  dashDiv: { height: 1, backgroundColor: '#E8EEF9', marginVertical: 12 },
+  dashSubhead: { fontSize: 12, fontWeight: '700', color: ranaColors.textSecondary, marginBottom: 8, letterSpacing: 0.3 },
+  barRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  barLbl: { fontSize: 11, color: ranaColors.textPrimary, fontWeight: '600', width: 80 },
+  barTrack: { flex: 1, height: 6, backgroundColor: '#F0F4FF', borderRadius: 3, flexDirection: 'row', overflow: 'hidden' },
+  barCnt: { fontSize: 11, fontWeight: '700', color: ranaColors.textSecondary, width: 16, textAlign: 'right' },
   summaryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1227,6 +1341,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  trackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: ranaRadius.pill,
+    backgroundColor: '#E1EEFF',
+    borderWidth: 1,
+    borderColor: '#C8D5EC',
+  },
+  trackBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: ranaColors.primary,
   },
   eyeBtn: {
     marginLeft: 8,

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { apiGetTrips, apiCreateTrip, apiUpdateTrip, apiDeleteTrip } from '@/src/services/apiService';
 
 export type TransportCategory =
   | 'Jeep'
@@ -8,7 +9,11 @@ export type TransportCategory =
   | 'Motor'
   | 'Car/Taxi'
   | 'Local Airplane'
-  | 'International Airplane';
+  | 'International Airplane'
+  | 'Ferry'
+  | 'FastCraft'
+  | 'Bangka'
+  | 'Cruise';
 
 export type Trip = {
   id: string;
@@ -49,9 +54,9 @@ type EstimateInput = {
 type TravelContextValue = {
   trips: Trip[];
   photos: PhotoEntry[];
-  addTrip: (trip: Omit<Trip, 'id' | 'dateISO'>) => void;
-  deleteTrip: (tripId: string) => void;
-  updateTrip: (tripId: string, updates: Partial<Omit<Trip, 'id'>>) => void;
+  addTrip: (trip: Omit<Trip, 'id' | 'dateISO'>) => void | Promise<void>;
+  deleteTrip: (tripId: string) => void | Promise<void>;
+  updateTrip: (tripId: string, updates: Partial<Omit<Trip, 'id'>>) => void | Promise<void>;
   addPhoto: (photo: Omit<PhotoEntry, 'id' | 'createdAtISO'>) => void;
   deletePhoto: (photoId: string) => void;
   estimateFare: (input: EstimateInput) => number;
@@ -68,6 +73,10 @@ export const TRIP_BASE_FARES: Record<
   'Car/Taxi': { minKm: 1, baseFare: 45, extraPerKm: 13.5 },
   'Local Airplane': { minKm: 1, baseFare: 1200, extraPerKm: 4.8 },
   'International Airplane': { minKm: 1, baseFare: 3200, extraPerKm: 8.9 },
+  Ferry: { minKm: 10, baseFare: 200, extraPerKm: 3.5 },
+  FastCraft: { minKm: 10, baseFare: 350, extraPerKm: 5.5 },
+  Bangka: { minKm: 1, baseFare: 80, extraPerKm: 15 },
+  Cruise: { minKm: 100, baseFare: 5000, extraPerKm: 2.5 },
 };
 
 const initialTrips: Trip[] = [
@@ -254,7 +263,7 @@ const initialTrips: Trip[] = [
 ];
 
 const TravelContext = createContext<TravelContextValue | undefined>(undefined);
-const TRIPS_STORAGE_KEY = 'rana_ph_trips_v1';
+const TRIPS_CACHE_KEY = 'rana_ph_trips_cache_v2';
 const PHOTOS_STORAGE_KEY = 'rana_ph_photos_v1';
 
 function computeSingleFare(transportType: TransportCategory, distanceKm: number): number {
@@ -265,77 +274,101 @@ function computeSingleFare(transportType: TransportCategory, distanceKm: number)
 }
 
 export function TravelProvider({ children }: { children: React.ReactNode }) {
-  const [trips, setTrips] = useState<Trip[]>(initialTrips);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
 
+  // Load trips: try API first, fall back to local cache, then seed data
   useEffect(() => {
     let mounted = true;
 
-    const hydrateStorage = async () => {
+    const loadTrips = async () => {
       try {
-        const [storedTripsRaw, storedPhotosRaw] = await Promise.all([
-          AsyncStorage.getItem(TRIPS_STORAGE_KEY),
-          AsyncStorage.getItem(PHOTOS_STORAGE_KEY),
-        ]);
-
+        const apiTrips = await apiGetTrips();
         if (!mounted) return;
-
-        if (storedTripsRaw) {
-          const storedTrips = JSON.parse(storedTripsRaw) as Trip[];
-          if (Array.isArray(storedTrips) && storedTrips.length > 0) {
-            setTrips(storedTrips);
-          }
+        if (Array.isArray(apiTrips)) {
+          setTrips(apiTrips);
+          await AsyncStorage.setItem(TRIPS_CACHE_KEY, JSON.stringify(apiTrips)).catch(() => {});
+          return;
         }
+      } catch {
+        // API unavailable — fall through to cache
+      }
 
-        if (storedPhotosRaw) {
-          const storedPhotos = JSON.parse(storedPhotosRaw) as PhotoEntry[];
-          if (Array.isArray(storedPhotos)) {
-            setPhotos(storedPhotos);
+      // Fallback: local cache
+      try {
+        const cached = await AsyncStorage.getItem(TRIPS_CACHE_KEY);
+        if (!mounted) return;
+        if (cached) {
+          const parsed = JSON.parse(cached) as Trip[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTrips(parsed);
+            return;
           }
         }
       } catch {
-        // Keep defaults when local storage cannot be read.
+        // cache unreadable
       }
+
+      // Last resort: seed data (offline demo)
+      if (mounted) setTrips(initialTrips);
     };
 
-    hydrateStorage();
+    loadTrips();
 
-    return () => {
-      mounted = false;
-    };
+    // Load photos from local storage (photos stay local for now)
+    AsyncStorage.getItem(PHOTOS_STORAGE_KEY)
+      .then((raw) => {
+        if (raw && mounted) {
+          const parsed = JSON.parse(raw) as PhotoEntry[];
+          if (Array.isArray(parsed)) setPhotos(parsed);
+        }
+      })
+      .catch(() => {});
+
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
-    AsyncStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(trips)).catch(() => {
-      // Ignore non-critical write failures.
-    });
-  }, [trips]);
-
-  useEffect(() => {
-    AsyncStorage.setItem(PHOTOS_STORAGE_KEY, JSON.stringify(photos)).catch(() => {
-      // Ignore non-critical write failures.
-    });
+    AsyncStorage.setItem(PHOTOS_STORAGE_KEY, JSON.stringify(photos)).catch(() => {});
   }, [photos]);
 
   const value = useMemo<TravelContextValue>(() => {
     return {
       trips,
       photos,
-      addTrip: (tripInput) => {
-        const nextTrip: Trip = {
+      addTrip: async (tripInput) => {
+        // Optimistic local add
+        const localTrip: Trip = {
           ...tripInput,
           id: `trip-${Date.now()}`,
           dateISO: new Date().toISOString(),
         };
-        setTrips((prev) => [nextTrip, ...prev]);
+        setTrips((prev) => [localTrip, ...prev]);
+        // Sync to API
+        try {
+          const saved = await apiCreateTrip(tripInput);
+          setTrips((prev) => prev.map((t) => (t.id === localTrip.id ? saved : t)));
+          AsyncStorage.setItem(TRIPS_CACHE_KEY, JSON.stringify([saved])).catch(() => {});
+        } catch {
+          // API unavailable — keep local entry
+        }
       },
-      deleteTrip: (tripId) => {
+      deleteTrip: async (tripId) => {
         setTrips((prev) => prev.filter((t) => t.id !== tripId));
+        try {
+          await apiDeleteTrip(tripId);
+        } catch {
+          // ignore — already removed locally
+        }
       },
-      updateTrip: (tripId, updates) => {
-        setTrips((prev) =>
-          prev.map((t) => (t.id === tripId ? { ...t, ...updates } : t))
-        );
+      updateTrip: async (tripId, updates) => {
+        setTrips((prev) => prev.map((t) => (t.id === tripId ? { ...t, ...updates } : t)));
+        try {
+          const current = trips.find((t) => t.id === tripId);
+          if (current) await apiUpdateTrip(tripId, { ...current, ...updates });
+        } catch {
+          // ignore — already updated locally
+        }
       },
       addPhoto: (photoInput) => {
         const nextPhoto: PhotoEntry = {
