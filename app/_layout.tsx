@@ -11,6 +11,7 @@ configureReanimatedLogger({ level: ReanimatedLogLevel.warn, strict: false });
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { TravelProvider } from '@/src/context/TravelContext';
 import { LanguageProvider } from '@/src/context/LanguageContext';
+import { WeatherProvider } from '@/src/context/WeatherContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -18,6 +19,7 @@ export default function RootLayout() {
   return (
     <LanguageProvider>
     <TravelProvider>
+    <WeatherProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack
           screenOptions={{
@@ -34,6 +36,7 @@ export default function RootLayout() {
         </Stack>
         <StatusBar style="dark" />
       </ThemeProvider>
+    </WeatherProvider>
     </TravelProvider>
     </LanguageProvider>
   );  

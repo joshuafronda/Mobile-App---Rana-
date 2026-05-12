@@ -27,7 +27,7 @@ import TextType from '@/src/components/TextType';
 import { useLanguage } from '@/src/context/LanguageContext';
 
 import { useTravel, type Trip } from '@/src/context/TravelContext';
-
+import { useWeather } from '@/src/context/WeatherContext';
 import { ranaColors, ranaRadius, ranaShadow, ranaSpacing } from '@/src/theme/ranaTheme';
 
 
@@ -46,7 +46,7 @@ const UPCOMING_SCROLL_ANIMATION_MS = UPCOMING_SNAP_FEEL === 'tight' ? 320 : 680;
 
 
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Destination data ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// Ã¢â€â‚¬Ã¢â€â‚¬ Destination data Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 interface Destination {
 
@@ -64,7 +64,7 @@ interface Destination {
 
   tagColor: string;
 
-  // Unsplash source ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â free to use, loads over the network
+  // Unsplash source Ã¢â‚¬â€ free to use, loads over the network
 
   imageUri: string;
 
@@ -78,7 +78,7 @@ interface Destination {
 
 const DESTINATIONS: Destination[] = [
 
-  // ðŸ–ï¸ Beach
+  // 🏖️ Beach
 
   {
 
@@ -92,7 +92,7 @@ const DESTINATIONS: Destination[] = [
 
       'Iconic overwater bungalows, crystal-clear lagoons, and lush volcanic peaks. A luxury-heavy destination where even budget options feel premium.',
 
-    bestMonths: 'May â€“ Oct',
+    bestMonths: 'May – Oct',
 
     tag: 'Beach',
 
@@ -102,7 +102,7 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Flight',
 
-    estimatedBudget: '$300 â€“ $1,000+ / day',
+    estimatedBudget: '$300 – $1,000+ / day',
 
   },
 
@@ -118,7 +118,7 @@ const DESTINATIONS: Destination[] = [
 
       'Turquoise atolls, coral reefs, and private island resorts. Wide range from affordable local islands to ultra-luxury overwater villas.',
 
-    bestMonths: 'Nov â€“ Apr',
+    bestMonths: 'Nov – Apr',
 
     tag: 'Beach',
 
@@ -128,11 +128,11 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Flight + Speedboat',
 
-    estimatedBudget: '$150 â€“ $800 / day',
+    estimatedBudget: '$150 – $800 / day',
 
   },
 
-  // ðŸŒ¿ Nature
+  // 🌿 Nature
 
   {
 
@@ -146,7 +146,7 @@ const DESTINATIONS: Destination[] = [
 
       'Emerald lakes, glaciers, and the Canadian Rockies. World-class hiking and skiing with costs covering lodging, food, and park fees.',
 
-    bestMonths: 'Jun â€“ Sep',
+    bestMonths: 'Jun – Sep',
 
     tag: 'Nature',
 
@@ -156,7 +156,7 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Car / Bus',
 
-    estimatedBudget: '$100 â€“ $300 / day',
+    estimatedBudget: '$100 – $300 / day',
 
   },
 
@@ -170,9 +170,9 @@ const DESTINATIONS: Destination[] = [
 
     description:
 
-      'The lungs of the Earth. Guided jungle tours, wildlife spotting, and river expeditions â€” mostly bundled packages that simplify budgeting.',
+      'The lungs of the Earth. Guided jungle tours, wildlife spotting, and river expeditions — mostly bundled packages that simplify budgeting.',
 
-    bestMonths: 'Jun â€“ Nov',
+    bestMonths: 'Jun – Nov',
 
     tag: 'Nature',
 
@@ -182,11 +182,11 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Flight + Boat',
 
-    estimatedBudget: '$150 â€“ $400 / day',
+    estimatedBudget: '$150 – $400 / day',
 
   },
 
-  // ðŸ›ï¸ History
+  // 🏛️ History
 
   {
 
@@ -198,9 +198,9 @@ const DESTINATIONS: Destination[] = [
 
     description:
 
-      'The Eternal City â€” the Colosseum, Vatican, and centuries of history on every street. Flexible budget from hostels to boutique hotels.',
+      'The Eternal City — the Colosseum, Vatican, and centuries of history on every street. Flexible budget from hostels to boutique hotels.',
 
-    bestMonths: 'Apr â€“ Jun, Sep â€“ Oct',
+    bestMonths: 'Apr – Jun, Sep – Oct',
 
     tag: 'History',
 
@@ -210,7 +210,7 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Flight + Metro',
 
-    estimatedBudget: '$80 â€“ $250 / day',
+    estimatedBudget: '$80 – $250 / day',
 
   },
 
@@ -226,7 +226,7 @@ const DESTINATIONS: Destination[] = [
 
       'The lost Incan citadel perched high in the Andes. Tours, entrance permits, and transport are included in most packages.',
 
-    bestMonths: 'May â€“ Oct',
+    bestMonths: 'May – Oct',
 
     tag: 'History',
 
@@ -236,11 +236,11 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Flight + Train',
 
-    estimatedBudget: '$100 â€“ $300 / day',
+    estimatedBudget: '$100 – $300 / day',
 
   },
 
-  // ðŸ§— Adventure
+  // 🧗 Adventure
 
   {
 
@@ -252,9 +252,9 @@ const DESTINATIONS: Destination[] = [
 
     description:
 
-      'The adventure capital of the world â€” bungee jumping, skydiving, jet boating, and skiing. Activities are the main cost driver here.',
+      'The adventure capital of the world — bungee jumping, skydiving, jet boating, and skiing. Activities are the main cost driver here.',
 
-    bestMonths: 'Dec â€“ Feb, Jun â€“ Aug',
+    bestMonths: 'Dec – Feb, Jun – Aug',
 
     tag: 'Adventure',
 
@@ -264,7 +264,7 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Flight + Car',
 
-    estimatedBudget: '$120 â€“ $350 / day',
+    estimatedBudget: '$120 – $350 / day',
 
   },
 
@@ -280,7 +280,7 @@ const DESTINATIONS: Destination[] = [
 
       'Dramatic glaciers, jagged peaks, and untouched wilderness at the tip of South America. Self-guided hiking keeps costs manageable.',
 
-    bestMonths: 'Nov â€“ Mar',
+    bestMonths: 'Nov – Mar',
 
     tag: 'Adventure',
 
@@ -290,11 +290,11 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Flight + Bus',
 
-    estimatedBudget: '$80 â€“ $250 / day',
+    estimatedBudget: '$80 – $250 / day',
 
   },
 
-  // ðŸ—¼ Landmark
+  // 🗼 Landmark
 
   {
 
@@ -308,7 +308,7 @@ const DESTINATIONS: Destination[] = [
 
       'The iron lady of Paris and one of the world\'s most recognizable landmarks. Accommodation is the primary expense in the City of Light.',
 
-    bestMonths: 'Apr â€“ Jun, Sep â€“ Nov',
+    bestMonths: 'Apr – Jun, Sep – Nov',
 
     tag: 'Landmark',
 
@@ -318,7 +318,7 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Flight + Metro',
 
-    estimatedBudget: '$120 â€“ $300 / day',
+    estimatedBudget: '$120 – $300 / day',
 
   },
 
@@ -332,9 +332,9 @@ const DESTINATIONS: Destination[] = [
 
     description:
 
-      'Stretching over 13,000 miles, the Great Wall is one of history\'s greatest engineering feats â€” and one of the most budget-friendly major landmarks.',
+      'Stretching over 13,000 miles, the Great Wall is one of history\'s greatest engineering feats — and one of the most budget-friendly major landmarks.',
 
-    bestMonths: 'Apr â€“ May, Sep â€“ Oct',
+    bestMonths: 'Apr – May, Sep – Oct',
 
     tag: 'Landmark',
 
@@ -344,7 +344,7 @@ const DESTINATIONS: Destination[] = [
 
     transport: 'Flight + Bus',
 
-    estimatedBudget: '$50 â€“ $150 / day',
+    estimatedBudget: '$50 – $150 / day',
 
   },
 
@@ -352,7 +352,7 @@ const DESTINATIONS: Destination[] = [
 
 
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Helpers ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 function formatPHP(value: number) {
 
@@ -384,7 +384,7 @@ function dayIntensity(dayTrips: number) {
 
 
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Destination card ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// Ã¢â€â‚¬Ã¢â€â‚¬ Destination card Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 function DestinationCard({ dest, index }: { dest: Destination; index: number }) {
 
@@ -484,7 +484,7 @@ function DestinationCard({ dest, index }: { dest: Destination; index: number }) 
 
 
 
-        {/* Description ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â collapsed by default */}
+        {/* Description Ã¢â‚¬â€ collapsed by default */}
 
         {expanded && (
 
@@ -514,7 +514,7 @@ function DestinationCard({ dest, index }: { dest: Destination; index: number }) 
 
 
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Main screen ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// Ã¢â€â‚¬Ã¢â€â‚¬ Main screen Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 export default function ExploreScreen() {
 
@@ -522,13 +522,8 @@ export default function ExploreScreen() {
 
   const { t } = useLanguage();
 
-  const [cityName, setCityName] = useState('Locating...');
-
-  const [temperature, setTemperature] = useState<number | null>(null);
-
-  const [humidity, setHumidity] = useState<number | null>(null);
-
-  const [weatherIcon, setWeatherIcon] = useState<keyof typeof Ionicons.glyphMap>('partly-sunny');
+  // -- Weather from shared context (OWM / open-meteo fallback) --
+  useWeather();
 
   const [activeFilter, setActiveFilter] = useState<string>('All');
 
@@ -537,6 +532,11 @@ export default function ExploreScreen() {
   const [boardingPassTrip, setBoardingPassTrip] = useState<Trip | null>(null);
 
   const [calendarVisible, setCalendarVisible] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
+  const [dateFilterVisible, setDateFilterVisible] = useState(false);
+  const [filterTempMonth, setFilterTempMonth] = useState(calendarMonth.getMonth());
+  const [filterTempYear, setFilterTempYear] = useState(calendarMonth.getFullYear());
 
   const carouselProgress = useSharedValue<number>(0);
 
@@ -569,6 +569,72 @@ export default function ExploreScreen() {
     dayCountMap.set(day, (dayCountMap.get(day) ?? 0) + 1);
 
   });
+
+  // Calendar grid generation for modal
+  const generateCalendarDays = () => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    let startingDayOfWeek = firstDay.getDay();
+    // Convert Sunday (0) to 6, so Monday is 0, Tuesday is 1, etc.
+    startingDayOfWeek = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
+
+    const days: (number | null)[] = [];
+    
+    // Add leading empty cells (before day 1)
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Add all days of the month (1 to daysInMonth)
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    
+    // Add trailing empty cells to complete grid to 6 rows (42 cells total)
+    const totalCells = 42; // 6 weeks × 7 days
+    while (days.length < totalCells) {
+      days.push(null);
+    }
+
+    // Convert flat array to 2D array (weeks)
+    const weeks: (number | null)[][] = [];
+    for (let i = 0; i < days.length; i += 7) {
+      weeks.push(days.slice(i, i + 7));
+    }
+    
+    return weeks;
+  };
+
+  const getTripsForDate = (day: number) => {
+    const dateStr = `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return trips.filter(t => t.dateISO.startsWith(dateStr));
+  };
+
+  const handleFilterApply = () => {
+    setCalendarMonth(new Date(filterTempYear, filterTempMonth, 1));
+    setSelectedCalendarDate(null);
+    setDateFilterVisible(false);
+  };
+
+  const handleFilterReset = () => {
+    const today = new Date();
+    setFilterTempMonth(today.getMonth());
+    setFilterTempYear(today.getFullYear());
+  };
+
+  const handleFilterCurrentMonth = () => {
+    const today = new Date();
+    setFilterTempMonth(today.getMonth());
+    setFilterTempYear(today.getFullYear());
+  };
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const YEAR_RANGE = Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i);
+
+  const calendarWeeks = generateCalendarDays();
 
 
 
@@ -622,25 +688,25 @@ export default function ExploreScreen() {
 
   const tripsToDisplay: import('@/src/context/TravelContext').Trip[] = plannedTrips.length > 0 ? plannedTrips : [
 
-    { id: 'mock1', title: 'Bora Bora Luxury Escape', origin: 'Manila', destination: 'Bora Bora', transportType: 'International Airplane', dateISO: '2026-07-10T00:00:00Z', startDate: '2026-07-10', endDate: '2026-07-15', distanceKm: 8700, passengers: 2, totalCost: 0, country: 'French Polynesia', status: 'planned', budgetRange: '₱250,000 – ₱500,000+', budgetNotes: ['Flights: very expensive (multiple connections)', 'Stay: luxury resorts dominate', '👉 This is premium / honeymoon-level'] },
+    { id: 'mock1', title: 'Bora Bora Luxury Escape', origin: 'Manila', destination: 'Bora Bora', transportType: 'International Airplane', dateISO: '2026-07-10T00:00:00Z', startDate: '2026-07-10', endDate: '2026-07-15', distanceKm: 8700, passengers: 2, totalCost: 0, country: 'French Polynesia', status: 'planned', budgetRange: '?250,000 � ?500,000+', budgetNotes: ['Flights: very expensive (multiple connections)', 'Stay: luxury resorts dominate', '?? This is premium / honeymoon-level'] },
 
-    { id: 'mock2', title: 'Maldives Island Getaway', origin: 'Manila', destination: 'Maldives', transportType: 'International Airplane', dateISO: '2026-11-05T00:00:00Z', startDate: '2026-11-05', endDate: '2026-11-10', distanceKm: 5800, passengers: 3, totalCost: 0, country: 'Maldives', status: 'planned', budgetRange: '₱180,000 – ₱400,000', budgetNotes: ['Resorts + seaplane transfers', 'Can be cheaper with guesthouses (₱120k+)'] },
+    { id: 'mock2', title: 'Maldives Island Getaway', origin: 'Manila', destination: 'Maldives', transportType: 'International Airplane', dateISO: '2026-11-05T00:00:00Z', startDate: '2026-11-05', endDate: '2026-11-10', distanceKm: 5800, passengers: 3, totalCost: 0, country: 'Maldives', status: 'planned', budgetRange: '?180,000 � ?400,000', budgetNotes: ['Resorts + seaplane transfers', 'Can be cheaper with guesthouses (?120k+)'] },
 
-    { id: 'mock3', title: 'Banff Nature Exploration', origin: 'Manila', destination: 'Banff National Park', transportType: 'International Airplane', dateISO: '2026-09-12T00:00:00Z', startDate: '2026-09-12', endDate: '2026-09-18', distanceKm: 10500, passengers: 4, totalCost: 0, country: 'Canada', status: 'planned', budgetRange: '₱120,000 – ₱220,000', budgetNotes: ['Flights to Canada = biggest cost', 'Car rental + park tours'] },
+    { id: 'mock3', title: 'Banff Nature Exploration', origin: 'Manila', destination: 'Banff National Park', transportType: 'International Airplane', dateISO: '2026-09-12T00:00:00Z', startDate: '2026-09-12', endDate: '2026-09-18', distanceKm: 10500, passengers: 4, totalCost: 0, country: 'Canada', status: 'planned', budgetRange: '?120,000 � ?220,000', budgetNotes: ['Flights to Canada = biggest cost', 'Car rental + park tours'] },
 
-    { id: 'mock4', title: 'Amazon Jungle Adventure', origin: 'Manila', destination: 'Amazon Rainforest', transportType: 'International Airplane', dateISO: '2026-08-20T00:00:00Z', startDate: '2026-08-20', endDate: '2026-08-27', distanceKm: 17000, passengers: 2, totalCost: 0, country: 'Brazil', status: 'planned', budgetRange: '₱180,000 – ₱300,000', budgetNotes: ['Long-haul flights', 'Guided jungle tours required'] },
+    { id: 'mock4', title: 'Amazon Jungle Adventure', origin: 'Manila', destination: 'Amazon Rainforest', transportType: 'International Airplane', dateISO: '2026-08-20T00:00:00Z', startDate: '2026-08-20', endDate: '2026-08-27', distanceKm: 17000, passengers: 2, totalCost: 0, country: 'Brazil', status: 'planned', budgetRange: '?180,000 � ?300,000', budgetNotes: ['Long-haul flights', 'Guided jungle tours required'] },
 
-    { id: 'mock5', title: 'Rome Historical Tour', origin: 'Manila', destination: 'Rome', transportType: 'International Airplane', dateISO: '2026-10-01T00:00:00Z', startDate: '2026-10-01', endDate: '2026-10-07', distanceKm: 10300, passengers: 2, totalCost: 0, country: 'Italy', status: 'planned', budgetRange: '₱90,000 – ₱180,000', budgetNotes: ['Cheaper flights (promo possible)', 'Food + attractions reasonable'] },
+    { id: 'mock5', title: 'Rome Historical Tour', origin: 'Manila', destination: 'Rome', transportType: 'International Airplane', dateISO: '2026-10-01T00:00:00Z', startDate: '2026-10-01', endDate: '2026-10-07', distanceKm: 10300, passengers: 2, totalCost: 0, country: 'Italy', status: 'planned', budgetRange: '?90,000 � ?180,000', budgetNotes: ['Cheaper flights (promo possible)', 'Food + attractions reasonable'] },
 
-    { id: 'mock6', title: 'Machu Picchu Expedition', origin: 'Manila', destination: 'Machu Picchu', transportType: 'International Airplane', dateISO: '2026-09-25T00:00:00Z', startDate: '2026-09-25', endDate: '2026-10-02', distanceKm: 17500, passengers: 3, totalCost: 0, country: 'Peru', status: 'planned', budgetRange: '₱150,000 – ₱280,000', budgetNotes: ['Flights + train + entrance fees', 'Tour packages common'] },
+    { id: 'mock6', title: 'Machu Picchu Expedition', origin: 'Manila', destination: 'Machu Picchu', transportType: 'International Airplane', dateISO: '2026-09-25T00:00:00Z', startDate: '2026-09-25', endDate: '2026-10-02', distanceKm: 17500, passengers: 3, totalCost: 0, country: 'Peru', status: 'planned', budgetRange: '?150,000 � ?280,000', budgetNotes: ['Flights + train + entrance fees', 'Tour packages common'] },
 
-    { id: 'mock7', title: 'Queenstown Adventure Week', origin: 'Manila', destination: 'Queenstown', transportType: 'International Airplane', dateISO: '2026-12-01T00:00:00Z', startDate: '2026-12-01', endDate: '2026-12-07', distanceKm: 8300, passengers: 5, totalCost: 0, country: 'New Zealand', status: 'planned', budgetRange: '₱130,000 – ₱250,000', budgetNotes: ['Activities (bungee, skydiving) are pricey', 'Flights moderate'] },
+    { id: 'mock7', title: 'Queenstown Adventure Week', origin: 'Manila', destination: 'Queenstown', transportType: 'International Airplane', dateISO: '2026-12-01T00:00:00Z', startDate: '2026-12-01', endDate: '2026-12-07', distanceKm: 8300, passengers: 5, totalCost: 0, country: 'New Zealand', status: 'planned', budgetRange: '?130,000 � ?250,000', budgetNotes: ['Activities (bungee, skydiving) are pricey', 'Flights moderate'] },
 
-    { id: 'mock8', title: 'Patagonia Hiking Journey', origin: 'Manila', destination: 'Patagonia', transportType: 'International Airplane', dateISO: '2026-11-15T00:00:00Z', startDate: '2026-11-15', endDate: '2026-11-25', distanceKm: 18000, passengers: 4, totalCost: 0, country: 'Argentina / Chile', status: 'planned', budgetRange: '₱180,000 – ₱320,000', budgetNotes: ['Remote area → transport costs high', 'Hiking tours + gear'] },
+    { id: 'mock8', title: 'Patagonia Hiking Journey', origin: 'Manila', destination: 'Patagonia', transportType: 'International Airplane', dateISO: '2026-11-15T00:00:00Z', startDate: '2026-11-15', endDate: '2026-11-25', distanceKm: 18000, passengers: 4, totalCost: 0, country: 'Argentina / Chile', status: 'planned', budgetRange: '?180,000 � ?320,000', budgetNotes: ['Remote area ? transport costs high', 'Hiking tours + gear'] },
 
-    { id: 'mock9', title: 'Paris Landmark Experience', origin: 'Manila', destination: 'Eiffel Tower', transportType: 'International Airplane', dateISO: '2026-10-15T00:00:00Z', startDate: '2026-10-15', endDate: '2026-10-20', distanceKm: 10700, passengers: 2, totalCost: 0, country: 'France', status: 'planned', budgetRange: '₱100,000 – ₱200,000', budgetNotes: ['Paris can be expensive, but manageable', 'Budget stays available'] },
+    { id: 'mock9', title: 'Paris Landmark Experience', origin: 'Manila', destination: 'Eiffel Tower', transportType: 'International Airplane', dateISO: '2026-10-15T00:00:00Z', startDate: '2026-10-15', endDate: '2026-10-20', distanceKm: 10700, passengers: 2, totalCost: 0, country: 'France', status: 'planned', budgetRange: '?100,000 � ?200,000', budgetNotes: ['Paris can be expensive, but manageable', 'Budget stays available'] },
 
-    { id: 'mock10', title: 'Great Wall Cultural Trip', origin: 'Manila', destination: 'Great Wall of China', transportType: 'International Airplane', dateISO: '2026-04-05T00:00:00Z', startDate: '2026-04-05', endDate: '2026-04-10', distanceKm: 2900, passengers: 6, totalCost: 0, country: 'China', status: 'planned', budgetRange: '₱60,000 – ₱120,000', budgetNotes: ['One of the cheapest in the list', 'Flights from PH are relatively affordable'] },
+    { id: 'mock10', title: 'Great Wall Cultural Trip', origin: 'Manila', destination: 'Great Wall of China', transportType: 'International Airplane', dateISO: '2026-04-05T00:00:00Z', startDate: '2026-04-05', endDate: '2026-04-10', distanceKm: 2900, passengers: 6, totalCost: 0, country: 'China', status: 'planned', budgetRange: '?60,000 � ?120,000', budgetNotes: ['One of the cheapest in the list', 'Flights from PH are relatively affordable'] },
 
   ];
 
@@ -648,7 +714,7 @@ export default function ExploreScreen() {
 
 
 
-  // Only show Jan Ã¢â€ â€™ current month of this year
+  // Only show Jan â†’ current month of this year
 
   const heatmapMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -656,7 +722,7 @@ export default function ExploreScreen() {
 
 
 
-  // Heatmap grid covers Jan 1 of this year Ã¢â€ â€™ today
+  // Heatmap grid covers Jan 1 of this year â†’ today
 
   const heatJan1 = new Date(new Date().getFullYear(), 0, 1);
 
@@ -672,99 +738,7 @@ export default function ExploreScreen() {
 
 
 
-  useEffect(() => {
 
-    let mounted = true;
-
-
-
-    const weatherCodeToIcon = (code: number): keyof typeof Ionicons.glyphMap => {
-
-      if (code === 0) return 'sunny';
-
-      if (code <= 3) return 'partly-sunny';
-
-      if (code <= 57) return 'cloudy';
-
-      if (code <= 67) return 'rainy';
-
-      if (code <= 77) return 'snow';
-
-      if (code <= 82) return 'rainy';
-
-      if (code <= 95) return 'thunderstorm';
-
-      return 'partly-sunny';
-
-    };
-
-
-
-    const fetchWeather = async () => {
-
-      try {
-
-        const permission = await Location.requestForegroundPermissionsAsync();
-
-        if (permission.status !== 'granted') {
-
-          if (mounted) { setCityName('Quezon City'); setTemperature(29); }
-
-          return;
-
-        }
-
-        const current = await Location.getCurrentPositionAsync({});
-
-        const { latitude, longitude } = current.coords;
-
-        const places = await Location.reverseGeocodeAsync({ latitude, longitude });
-
-        const place = places[0];
-
-        const resolvedCity = place?.city || place?.district || place?.subregion || 'Current location';
-
-        const weatherResponse = await fetch(
-
-          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,relative_humidity_2m`
-
-        );
-
-        const weatherJson = (await weatherResponse.json()) as {
-
-          current?: { temperature_2m?: number; weather_code?: number; relative_humidity_2m?: number };
-
-        };
-
-        if (!mounted) return;
-
-        setCityName(resolvedCity);
-
-        if (typeof weatherJson.current?.temperature_2m === 'number') setTemperature(weatherJson.current.temperature_2m);
-
-        if (typeof weatherJson.current?.weather_code === 'number') setWeatherIcon(weatherCodeToIcon(weatherJson.current.weather_code));
-
-        if (typeof weatherJson.current?.relative_humidity_2m === 'number') setHumidity(weatherJson.current.relative_humidity_2m);
-
-      } catch {
-
-        if (mounted) { setCityName('Quezon City'); setTemperature(29); }
-
-      }
-
-    };
-
-
-
-    fetchWeather();
-
-    // Refresh weather every 10 minutes
-
-    const interval = setInterval(fetchWeather, 10 * 60 * 1000);
-
-    return () => { mounted = false; clearInterval(interval); };
-
-  }, []);
 
 
 
@@ -844,7 +818,7 @@ export default function ExploreScreen() {
 
               <Text style={styles.heroBannerWelcome}>
 
-                Welcome to <Text style={{ color: '#7EB3FF', fontWeight: '700' }}>Rana</Text> — your smart travel planner.
+                Welcome to <Text style={{ color: '#7EB3FF', fontWeight: '700' }}>Rana</Text> � your smart travel planner.
 
               </Text>
 
@@ -867,12 +841,11 @@ export default function ExploreScreen() {
         </StaggeredFadeIn>
 
         {/* Planned Upcoming Trips */}
-
         <StaggeredFadeIn index={1} style={styles.upcomingSection}>
 
           <Text style={styles.sectionHeaderTitle}>Planned Trips</Text>
 
-          <Text style={styles.sectionHeaderDesc}>Your upcoming adventures — swipe to explore each trip.</Text>
+          <Text style={styles.sectionHeaderDesc}>Your upcoming adventures � swipe to explore each trip.</Text>
 
           <View style={styles.upcomingCarouselWrap}>
 
@@ -968,7 +941,7 @@ export default function ExploreScreen() {
 
                       >
 
-                        {/* â”€â”€â”€ TICKET TOP (HEADER) â”€â”€â”€ */}
+                        {/* ─── TICKET TOP (HEADER) ─── */}
 
                         <LinearGradient
 
@@ -1088,7 +1061,7 @@ export default function ExploreScreen() {
 
 
 
-                        {/* â”€â”€â”€ TEAR DIVIDER â”€â”€â”€ */}
+                        {/* ─── TEAR DIVIDER ─── */}
 
                         <View style={styles.ticketTearRow}>
 
@@ -1110,7 +1083,7 @@ export default function ExploreScreen() {
 
 
 
-                        {/* â”€â”€â”€ TICKET BOTTOM (DETAILS) â”€â”€â”€ */}
+                        {/* ─── TICKET BOTTOM (DETAILS) ─── */}
 
                         <View style={styles.ticketCardBottom}>
 
@@ -1152,7 +1125,7 @@ export default function ExploreScreen() {
 
                               <Text style={[styles.ticketDetailValue, { color: ranaColors.primary, fontWeight: '900' }]}>
 
-                                {trip.totalCost > 0 ? `â‚±${(trip.totalCost / 1000).toFixed(1)}k` : 'TBD'}
+                                {trip.totalCost > 0 ? `₱${(trip.totalCost / 1000).toFixed(1)}k` : 'TBD'}
 
                               </Text>
 
@@ -1182,7 +1155,7 @@ export default function ExploreScreen() {
 
                                 <View key={i} style={styles.ticketBudgetNoteRow}>
 
-                                  <Text style={styles.ticketBudgetDot}>•</Text>
+                                  <Text style={styles.ticketBudgetDot}>�</Text>
 
                                   <Text style={styles.ticketBudgetNoteText}>{note}</Text>
 
@@ -1346,125 +1319,481 @@ export default function ExploreScreen() {
 
       />
 
-      {/* Calendar Modal */}
+      {/* Trip Calendar Modal */}
 
-      <Modal visible={calendarVisible} animationType="slide" transparent>
+      <Modal visible={calendarVisible} animationType="slide" transparent onRequestClose={() => setCalendarVisible(false)}>
 
         <View style={styles.calendarOverlay}>
 
           <View style={styles.calendarModal}>
 
-            <View style={styles.calendarHeader}>
+            {/* 1. TOP HEADER */}
 
-              <Text style={styles.calendarTitle}>Trip Calendar</Text>
+            <View style={styles.calendarTopHeader}>
 
-              <TouchableOpacity onPress={() => setCalendarVisible(false)} style={styles.calendarCloseBtn}>
+              <TouchableOpacity onPress={() => setCalendarVisible(false)} style={styles.calendarHeaderBtn}>
 
-                <Ionicons name="close" size={22} color={ranaColors.textPrimary} />
+                <Ionicons name="chevron-down" size={28} color={ranaColors.textPrimary} />
+
+              </TouchableOpacity>
+
+              <Text style={styles.calendarHeaderTitle}>Trip Planner</Text>
+
+              <View style={styles.calendarHeaderSpacer} />
+
+            </View>
+
+            {/* 2. MONTH & YEAR NAVIGATION */}
+
+            <View style={styles.calendarNavBar}>
+
+              <TouchableOpacity 
+
+                onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
+
+                style={styles.calendarMonthNavBtn}
+
+              >
+
+                <Ionicons name="chevron-back" size={20} color={ranaColors.primary} />
+
+              </TouchableOpacity>
+
+              <View style={styles.calendarMonthDisplay}>
+
+                <Text style={styles.calendarMonthText}>
+
+                  {calendarMonth.toLocaleDateString('en-US', { month: 'short' })}
+
+                </Text>
+
+                <Text style={styles.calendarYearText}>
+
+                  {calendarMonth.getFullYear()}
+
+                </Text>
+
+              </View>
+
+              <TouchableOpacity
+
+                onPress={() => {
+                  setFilterTempMonth(calendarMonth.getMonth());
+                  setFilterTempYear(calendarMonth.getFullYear());
+                  setDateFilterVisible(true);
+                }}
+
+                style={styles.calendarFilterBtn}
+
+              >
+
+                <Ionicons name="options" size={18} color={ranaColors.primary} />
+
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+
+                onPress={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))}
+
+                style={styles.calendarMonthNavBtn}
+
+              >
+
+                <Ionicons name="chevron-forward" size={20} color={ranaColors.primary} />
 
               </TouchableOpacity>
 
             </View>
 
-            {trips.length === 0 ? (
+            {/* SCROLLABLE CONTENT AREA: Grid + Summary + Activities */}
 
-              <View style={styles.calendarEmpty}>
+            <ScrollView 
 
-                <Ionicons name="calendar-outline" size={48} color={ranaColors.muted} />
+              style={styles.calendarContentScroll}
 
-                <Text style={styles.calendarEmptyText}>No trips scheduled yet</Text>
+              contentContainerStyle={styles.calendarContentContainer}
+
+              showsVerticalScrollIndicator={false}
+
+            >
+
+              {/* 3. CALENDAR GRID (FIXED HEIGHT) */}
+
+              <View style={styles.calendarGridSection}>
+
+                <View style={styles.calendarWeekdayHeader}>
+
+                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => (
+
+                    <View key={idx} style={styles.calendarWeekdayCell}>
+
+                      <Text style={styles.calendarWeekdayLabel}>{day}</Text>
+
+                    </View>
+
+                  ))}
+
+                </View>
+
+                <View style={styles.calendarDaysGrid}>
+
+                  {calendarWeeks.map((week, weekIndex) => (
+
+                    <View key={weekIndex} style={styles.calendarGridWeek}>
+
+                      {week.map((day, dayIndex) => {
+
+                        if (!day) return <View key={`empty-${weekIndex}-${dayIndex}`} style={styles.calendarGridDayEmpty} />;
+
+                        const dateObj = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
+
+                        const tripsOnDay = getTripsForDate(day);
+
+                        const isSelected = selectedCalendarDate?.toDateString() === dateObj.toDateString();
+
+                        const isToday = new Date().toDateString() === dateObj.toDateString();
+
+                        const hasTrips = tripsOnDay.length > 0;
+
+                        return (
+
+                          <TouchableOpacity 
+
+                            key={`day-${weekIndex}-${dayIndex}`}
+
+                            style={[
+
+                              styles.calendarGridDay,
+
+                              hasTrips && styles.calendarGridDayHasTrips,
+
+                              isToday && styles.calendarGridDayToday,
+
+                              isSelected && styles.calendarGridDaySelected,
+
+                            ]}
+
+                            onPress={() => setSelectedCalendarDate(dateObj)}
+
+                          >
+
+                            <Text style={[
+
+                              styles.calendarGridDayNum,
+
+                              (isToday || hasTrips) && styles.calendarGridDayNumActive,
+
+                              isSelected && styles.calendarGridDayNumSelected,
+
+                            ]}>
+
+                              {day}
+
+                            </Text>
+
+                          </TouchableOpacity>
+
+                        );
+
+                      })}
+
+                    </View>
+
+                  ))}
+
+                </View>
 
               </View>
 
-            ) : (
+              {/* 4. SELECTED DAY SUMMARY + TRIPS (Direct flow, no dead space) */}
 
-              <ScrollView style={styles.calendarList} showsVerticalScrollIndicator={false}>
+              {selectedCalendarDate ? (
 
-                {trips
+                <>
 
-                  .filter(t => t.startDate)
+                  <View style={styles.calendarDaySummary}>
 
-                  .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())
+                    <Text style={styles.calendarDayLabel}>
 
-                  .map(trip => {
+                      {selectedCalendarDate.toLocaleDateString('en-US', { weekday: 'long' })}
 
-                    const start = new Date(trip.startDate!);
+                    </Text>
 
-                    const end = trip.endDate ? new Date(trip.endDate) : null;
+                    <Text style={styles.calendarDayDate}>
 
-                    const startStr = start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                      {selectedCalendarDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
 
-                    const endStr = end ? end.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : null;
+                    </Text>
 
-                    const isPast = new Date(trip.endDate || trip.startDate!) < new Date();
+                  </View>
 
-                    return (
+                  {/* 5. TRIP LIST */}
 
-                      <View key={trip.id} style={[styles.calendarTripItem, isPast && styles.calendarTripPast]}>
+                  <View style={styles.calendarDayActivitiesContainer}>
 
-                        <View style={styles.calendarTripDotWrap}>
+                    {getTripsForDate(selectedCalendarDate.getDate()).length > 0 ? (
 
-                          <View style={[styles.calendarTripDot, { backgroundColor: isPast ? ranaColors.muted : ranaColors.primary }]} />
+                      getTripsForDate(selectedCalendarDate.getDate()).map((trip, idx) => (
 
-                          {end && <View style={styles.calendarTripLine} />}
+                        <View key={idx} style={styles.calendarActivityCard}>
 
-                        </View>
+                          <View style={styles.calendarActivityIcon}>
 
-                        <View style={styles.calendarTripContent}>
-
-                          <Text style={[styles.calendarTripName, isPast && styles.calendarTripNamePast]}>
-
-                            {trip.title || `${trip.origin} → ${trip.destination}`}
-
-                          </Text>
-
-                          <View style={styles.calendarTripDateRow}>
-
-                            <Ionicons name="calendar-outline" size={12} color={ranaColors.primary} />
-
-                            <Text style={styles.calendarTripDate}>{startStr}</Text>
+                            <Ionicons name="airplane" size={16} color={ranaColors.primary} />
 
                           </View>
 
-                          {endStr && (
+                          <View style={styles.calendarActivityBody}>
 
-                            <View style={styles.calendarTripDateRow}>
+                            <Text style={styles.calendarActivityTitle}>
 
-                              <Ionicons name="flag-outline" size={12} color={ranaColors.textSecondary} />
+                              {trip.title || `${trip.origin} → ${trip.destination}`}
 
-                              <Text style={styles.calendarTripDateEnd}>{endStr}</Text>
+                            </Text>
 
-                            </View>
+                            <Text style={styles.calendarActivityLocation}>
 
-                          )}
+                              {trip.origin} to {trip.destination}
 
-                          <View style={styles.calendarTripMetaRow}>
+                            </Text>
 
-                            <View style={styles.calendarTripChip}>
+                            {trip.startDate && (
 
-                              <Ionicons name="airplane-outline" size={10} color="#fff" />
+                              <Text style={styles.calendarActivityTime}>
 
-                              <Text style={styles.calendarTripChipText}>{trip.transportType}</Text>
+                                {new Date(trip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
 
-                            </View>
+                              </Text>
 
-                            <View style={[styles.calendarTripChip, { backgroundColor: isPast ? '#94A3B8' : '#0EA5E9' }]}>
+                            )}
 
-                              <Text style={styles.calendarTripChipText}>{isPast ? 'Past' : trip.status}</Text>
+                          </View>
 
-                            </View>
+                          <View style={styles.calendarActivityActions}>
+
+                            <Ionicons name="chevron-forward" size={18} color={ranaColors.textSecondary} />
 
                           </View>
 
                         </View>
+
+                      ))
+
+                    ) : (
+
+                      <View style={styles.calendarNoTripsState}>
+
+                        <Ionicons name="calendar-outline" size={40} color={ranaColors.muted} />
+
+                        <Text style={styles.calendarNoTripsText}>No trips scheduled</Text>
 
                       </View>
 
-                    );
+                    )}
 
-                  })}
+                  </View>
 
-              </ScrollView>
+                </>
+
+              ) : (
+
+                <View style={styles.calendarSelectPrompt}>
+
+                  <Ionicons name="hand-left-outline" size={48} color={ranaColors.muted} />
+
+                  <Text style={styles.calendarSelectPromptText}>Tap a date to view trips</Text>
+
+                </View>
+
+              )}
+
+            </ScrollView>
+
+            {/* DATE FILTER MODAL OVERLAY */}
+
+            {dateFilterVisible && (
+
+              <View style={styles.dateFilterOverlay}>
+
+                <View style={styles.dateFilterPanel}>
+
+                  {/* Header */}
+
+                  <View style={styles.dateFilterHeader}>
+
+                    <Text style={styles.dateFilterTitle}>Select Month & Year</Text>
+
+                    <TouchableOpacity onPress={() => setDateFilterVisible(false)}>
+
+                      <Ionicons name="close" size={24} color={ranaColors.textPrimary} />
+
+                    </TouchableOpacity>
+
+                  </View>
+
+                  {/* Quick Actions */}
+
+                  <View style={styles.dateFilterQuickActions}>
+
+                    <TouchableOpacity 
+
+                      style={styles.dateFilterQuickBtn}
+
+                      onPress={handleFilterCurrentMonth}
+
+                    >
+
+                      <Text style={styles.dateFilterQuickBtnText}>Current Month</Text>
+
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+
+                      style={styles.dateFilterQuickBtn}
+
+                      onPress={handleFilterReset}
+
+                    >
+
+                      <Text style={styles.dateFilterQuickBtnText}>Reset</Text>
+
+                    </TouchableOpacity>
+
+                  </View>
+
+                  {/* Month Grid */}
+
+                  <View style={styles.dateFilterSection}>
+
+                    <Text style={styles.dateFilterSectionLabel}>Month</Text>
+
+                    <View style={styles.dateFilterMonthGrid}>
+
+                      {monthNames.map((month, idx) => (
+
+                        <TouchableOpacity
+
+                          key={idx}
+
+                          style={[
+
+                            styles.dateFilterMonthBtn,
+
+                            filterTempMonth === idx && styles.dateFilterMonthBtnActive,
+
+                          ]}
+
+                          onPress={() => setFilterTempMonth(idx)}
+
+                        >
+
+                          <Text style={[
+
+                            styles.dateFilterMonthBtnText,
+
+                            filterTempMonth === idx && styles.dateFilterMonthBtnTextActive,
+
+                          ]}>
+
+                            {month.slice(0, 3)}
+
+                          </Text>
+
+                        </TouchableOpacity>
+
+                      ))}
+
+                    </View>
+
+                  </View>
+
+                  {/* Year List */}
+
+                  <View style={styles.dateFilterSection}>
+
+                    <Text style={styles.dateFilterSectionLabel}>Year</Text>
+
+                    <ScrollView
+
+                      horizontal
+
+                      showsHorizontalScrollIndicator={false}
+
+                      contentContainerStyle={styles.dateFilterYearScroll}
+
+                    >
+
+                      {YEAR_RANGE.map((year) => (
+
+                        <TouchableOpacity
+
+                          key={year}
+
+                          style={[
+
+                            styles.dateFilterYearBtn,
+
+                            filterTempYear === year && styles.dateFilterYearBtnActive,
+
+                          ]}
+
+                          onPress={() => setFilterTempYear(year)}
+
+                        >
+
+                          <Text style={[
+
+                            styles.dateFilterYearBtnText,
+
+                            filterTempYear === year && styles.dateFilterYearBtnTextActive,
+
+                          ]}>
+
+                            {year}
+
+                          </Text>
+
+                        </TouchableOpacity>
+
+                      ))}
+
+                    </ScrollView>
+
+                  </View>
+
+                  {/* Action Buttons */}
+
+                  <View style={styles.dateFilterActions}>
+
+                    <TouchableOpacity
+
+                      style={styles.dateFilterCancelBtn}
+
+                      onPress={() => setDateFilterVisible(false)}
+
+                    >
+
+                      <Text style={styles.dateFilterCancelBtnText}>Cancel</Text>
+
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+
+                      style={styles.dateFilterConfirmBtn}
+
+                      onPress={handleFilterApply}
+
+                    >
+
+                      <Text style={styles.dateFilterConfirmBtnText}>Apply</Text>
+
+                    </TouchableOpacity>
+
+                  </View>
+
+                </View>
+
+              </View>
 
             )}
 
@@ -1498,7 +1827,7 @@ const styles = StyleSheet.create({
 
 
 
-  // Ã¢â‚¬â€Ã¢â‚¬â€ Dashboard Header Ã¢â‚¬â€Ã¢â‚¬â€
+  // â€”â€” Dashboard Header â€”â€”
 
   dashboardHeader: {
 
@@ -3374,7 +3703,7 @@ const styles = StyleSheet.create({
 
 
 
-  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Header ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Header Ã¢â€â‚¬Ã¢â€â‚¬
 
   topRow: {
 
@@ -3410,7 +3739,7 @@ const styles = StyleSheet.create({
 
 
 
-  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Stats ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Stats Ã¢â€â‚¬Ã¢â€â‚¬
 
   statsRow: { flexDirection: 'row', gap: ranaSpacing.sm, marginBottom: ranaSpacing.sm },
 
@@ -3428,7 +3757,7 @@ const styles = StyleSheet.create({
 
 
 
-  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Weather ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Weather Ã¢â€â‚¬Ã¢â€â‚¬
 
   weatherCard: {
 
@@ -3446,7 +3775,7 @@ const styles = StyleSheet.create({
 
 
 
-  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Heatmap ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Heatmap Ã¢â€â‚¬Ã¢â€â‚¬
 
   heatmapCard: {
 
@@ -3462,7 +3791,7 @@ const styles = StyleSheet.create({
 
 
 
-  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Discover header ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Discover header Ã¢â€â‚¬Ã¢â€â‚¬
 
   discoverHeader: { marginBottom: ranaSpacing.sm },
 
@@ -3472,7 +3801,7 @@ const styles = StyleSheet.create({
 
 
 
-  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Filter chips ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Filter chips Ã¢â€â‚¬Ã¢â€â‚¬
 
   filterRow: { gap: 8, paddingBottom: ranaSpacing.sm },
 
@@ -3496,7 +3825,7 @@ const styles = StyleSheet.create({
 
 
 
-  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Destination card ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Destination card Ã¢â€â‚¬Ã¢â€â‚¬
 
   destCard: {
 
@@ -3644,126 +3973,443 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  // Calendar Modal
+  // ──────────────────────────────────────────────────────────────────────────
+  // Trip Calendar Modal Styles (Reorganized Hierarchy)
+  // ──────────────────────────────────────────────────────────────────────────
   calendarOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
   },
   calendarModal: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '80%',
-    paddingBottom: 32,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
+    height: '92%',
+    paddingTop: 0,
+    paddingBottom: 0,
+    overflow: 'hidden',
+    flexDirection: 'column',
   },
-  calendarHeader: {
+
+  // 1. TOP HEADER
+  calendarTopHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8EEF9',
+    backgroundColor: '#FAFAFA',
+  },
+  calendarHeaderBtn: {
+    padding: 8,
+  },
+  calendarHeaderTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: ranaColors.textPrimary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  calendarHeaderSpacer: {
+    width: 44,
+  },
+
+  // 2. MONTH & YEAR NAVIGATION BAR
+  calendarNavBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F5F9FF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0EAFF',
+  },
+  calendarMonthNavBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(27,43,89,0.05)',
+  },
+  calendarMonthDisplay: {
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  calendarMonthText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: ranaColors.primary,
+  },
+  calendarYearText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: ranaColors.textSecondary,
+    marginTop: 2,
+  },
+
+  // SCROLLABLE CONTENT AREA
+  calendarContentScroll: {
+    flex: 1,
+  },
+  calendarContentContainer: {
+    paddingBottom: 24,
+  },
+
+  // 3. CALENDAR GRID (FIXED SIZE)
+  calendarGridSection: {
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+  },
+  calendarWeekdayHeader: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    gap: 6,
+    paddingHorizontal: 2,
+  },
+  calendarWeekdayCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  calendarWeekdayLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: ranaColors.textSecondary,
+  },
+  calendarDaysGrid: {
+    gap: 6,
+  },
+  calendarGridWeek: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  // DATE CELL - PERFECTLY UNIFORM SIZE
+  calendarGridDay: {
+    flex: 1,
+    aspectRatio: 1 / 1,
+    borderRadius: 8,
+    backgroundColor: '#F5F9FF',
+    borderWidth: 1,
+    borderColor: '#E0EAFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    minWidth: 0,
+    maxWidth: '100%',
+  },
+  calendarGridDayHasTrips: {
+    backgroundColor: ranaColors.primary,
+    borderColor: ranaColors.primary,
+    borderWidth: 1,
+  },
+  calendarGridDaySelected: {
+    borderWidth: 2,
+    borderColor: ranaColors.primary,
+    backgroundColor: '#F5F9FF',
+  },
+  calendarGridDayToday: {
+    backgroundColor: '#FFE8B6',
+    borderColor: '#FFA500',
+    borderWidth: 1.5,
+  },
+  calendarGridDayEmpty: {
+    flex: 1,
+    aspectRatio: 1 / 1,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+  calendarGridDayNum: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#B0B8C1',
+    lineHeight: 14,
+  },
+  calendarGridDayNumActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  calendarGridDayNumSelected: {
+    color: ranaColors.primary,
+    fontWeight: '700',
+  },
+  calendarGridDayDot: {
+    display: 'none',
+  },
+
+  // 4. SELECTED DAY SUMMARY (TIGHT, DIRECT FLOW)
+  calendarDaySummary: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#EEF3FF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#D0E4FF',
+  },
+  calendarDayLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: ranaColors.primary,
+  },
+  calendarDayDate: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: ranaColors.textPrimary,
+    marginTop: 2,
+  },
+
+  // 5. DAILY TRIP LIST (DIRECT, NO SCROLL WRAPPER)
+  calendarDayActivitiesContainer: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  calendarActivityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#F0F4FF',
+  },
+  calendarActivityIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#EEF3FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  calendarActivityBody: {
+    flex: 1,
+  },
+  calendarActivityTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: ranaColors.textPrimary,
+  },
+  calendarActivityLocation: {
+    fontSize: 12,
+    color: ranaColors.textSecondary,
+    marginTop: 2,
+  },
+  calendarActivityTime: {
+    fontSize: 11,
+    color: ranaColors.primary,
+    fontWeight: '600',
+    marginTop: 3,
+  },
+  calendarActivityActions: {
+    padding: 6,
+  },
+
+  // 6. EMPTY STATES
+  calendarNoTripsState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+    gap: 8,
+  },
+  calendarNoTripsText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: ranaColors.textSecondary,
+  },
+  calendarSelectPrompt: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    gap: 12,
+  },
+  calendarSelectPromptText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: ranaColors.textSecondary,
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Date Filter Styles
+  // ──────────────────────────────────────────────────────────────────────────
+  dateFilterOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+    zIndex: 1000,
+  },
+  dateFilterPanel: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 16,
     paddingTop: 20,
+    paddingBottom: 24,
+    maxHeight: '85%',
+  },
+  dateFilterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E8EEF9',
   },
-  calendarTitle: {
-    fontSize: 20,
+  dateFilterTitle: {
+    fontSize: 18,
     fontWeight: '800',
     color: ranaColors.textPrimary,
   },
-  calendarCloseBtn: {
-    padding: 4,
-  },
-  calendarEmpty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    gap: 12,
-  },
-  calendarEmptyText: {
-    fontSize: 15,
-    color: ranaColors.textSecondary,
-    fontWeight: '600',
-  },
-  calendarList: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  calendarTripItem: {
-    flexDirection: 'row',
-    paddingVertical: 14,
-  },
-  calendarTripPast: {
-    opacity: 0.55,
-  },
-  calendarTripDotWrap: {
-    width: 24,
-    alignItems: 'center',
-    paddingTop: 4,
-  },
-  calendarTripDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: ranaColors.primary,
-  },
-  calendarTripLine: {
-    width: 2,
-    flex: 1,
-    backgroundColor: '#D6E0F5',
-    marginTop: 4,
-  },
-  calendarTripContent: {
-    flex: 1,
-    marginLeft: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F4FF',
-  },
-  calendarTripName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: ranaColors.textPrimary,
-    marginBottom: 6,
-  },
-  calendarTripNamePast: {
-    color: ranaColors.textSecondary,
-  },
-  calendarTripDateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 3,
-  },
-  calendarTripDate: {
-    fontSize: 13,
-    color: ranaColors.primary,
-    fontWeight: '600',
-  },
-  calendarTripDateEnd: {
-    fontSize: 13,
-    color: ranaColors.textSecondary,
-    fontWeight: '600',
-  },
-  calendarTripMetaRow: {
+  dateFilterQuickActions: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 6,
+    marginBottom: 20,
   },
-  calendarTripChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: ranaColors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  dateFilterQuickBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 10,
+    backgroundColor: '#F0F4FF',
+    borderWidth: 1,
+    borderColor: '#D0E4FF',
+    alignItems: 'center',
   },
-  calendarTripChipText: {
-    fontSize: 10,
+  dateFilterQuickBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: ranaColors.primary,
+  },
+  dateFilterSection: {
+    marginBottom: 24,
+  },
+  dateFilterSectionLabel: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#fff',
+    color: ranaColors.textPrimary,
+    marginBottom: 10,
+  },
+  dateFilterMonthGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  dateFilterMonthBtn: {
+    width: '23%',
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#F5F9FF',
+    borderWidth: 1.5,
+    borderColor: '#E0EAFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateFilterMonthBtnActive: {
+    backgroundColor: ranaColors.primary,
+    borderColor: ranaColors.primary,
+  },
+  dateFilterMonthBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: ranaColors.textSecondary,
+  },
+  dateFilterMonthBtnTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  dateFilterYearScroll: {
+    gap: 8,
+    paddingRight: 16,
+  },
+  dateFilterYearBtn: {
+    minWidth: 70,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#F5F9FF',
+    borderWidth: 1.5,
+    borderColor: '#E0EAFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateFilterYearBtnActive: {
+    backgroundColor: ranaColors.primary,
+    borderColor: ranaColors.primary,
+  },
+  dateFilterYearBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: ranaColors.textSecondary,
+  },
+  dateFilterYearBtnTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  dateFilterActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  dateFilterCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#F0F4FF',
+    borderWidth: 1,
+    borderColor: '#D0E4FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateFilterCancelBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: ranaColors.primary,
+  },
+  dateFilterConfirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: ranaColors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateFilterConfirmBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  calendarFilterBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(27,43,89,0.05)',
+  },
+
+  // DEPRECATED - keeping for cleanup
+  calendarEmptyState: {
+    display: 'none',
+  },
+  calendarEmptyInitial: {
+    display: 'none',
+  },
+  calendarEmptyStateText: {
+    display: 'none',
+  },
+  calendarEmptyStateSubtext: {
+    display: 'none',
+  },
+  calendarEmptyInitialText: {
+    display: 'none',
+  },
+  calendarAddActivityBtn: {
+    display: 'none',
+  },
+  calendarAddActivityBtnText: {
+    display: 'none',
   },
 
 });

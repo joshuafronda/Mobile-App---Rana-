@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 
 import { ranaColors, ranaRadius, ranaShadow, ranaSpacing } from '@/src/theme/ranaTheme';
+import { useWeather } from '@/src/context/WeatherContext';
 
 type Section = 'explore' | 'trips' | 'profile';
 
@@ -65,6 +66,17 @@ export default function AssistantScreen() {
   const { section } = useLocalSearchParams<{ section?: string | string[] }>();
   const activeSection = normalizeSection(section);
   const context = CONTENT[activeSection];
+  const { weatherComment, weatherIcon, temperature, cityName, bestTripDays, alerts } = useWeather();
+
+  // Build dynamic explore chips with best-day suggestions
+  const exploreChips = activeSection === 'explore' && bestTripDays.length > 0
+    ? [
+        ...bestTripDays.slice(0, 2).map(
+          (d) => `Plan trip ${d.label} — ${d.score}/100 travel score`
+        ),
+        ...context.chips.slice(0, 3),
+      ]
+    : context.chips;
 
   return (
     <LinearGradient colors={[ranaColors.backgroundTop, ranaColors.backgroundBottom]} style={styles.container}>
@@ -79,6 +91,65 @@ export default function AssistantScreen() {
           </View>
         </View>
 
+        {/* Live weather comment bubble */}
+        {activeSection === 'explore' && weatherComment ? (
+          <View style={styles.weatherBubble}>
+            <View style={styles.weatherBubbleIcon}>
+              <Ionicons name={weatherIcon as any} size={18} color={ranaColors.primary} />
+            </View>
+            <View style={styles.weatherBubbleBody}>
+              {cityName ? <Text style={styles.weatherBubbleCity}>{cityName}{temperature !== null && temperature !== undefined ? ` · ${Math.round(temperature)}°C` : ''}</Text> : null}
+              <Text style={styles.weatherBubbleText}>{weatherComment}</Text>
+            </View>
+          </View>
+        ) : null}
+
+        {/* Weather alerts */}
+        {activeSection === 'trips' && alerts.length > 0 ? (
+          <View style={styles.alertBubble}>
+            <Ionicons name="warning" size={16} color="#B45309" />
+            <Text style={styles.alertText}>{alerts[0].event} — {alerts[0].description?.slice(0, 80)}…</Text>
+          </View>
+        ) : null}
+
+        {/* ── Best Days to Travel (only in Explore Assistant) ── */}
+        {activeSection === 'explore' && bestTripDays.length > 0 ? (
+          <View style={styles.bestDaysSection}>
+            <View style={styles.bestDaysHeaderRow}>
+              <Ionicons name="sparkles" size={15} color={ranaColors.primary} />
+              <Text style={styles.bestDaysTitle}>Best Days to Travel</Text>
+              <Text style={styles.bestDaysSubtitle}> · next 8 days</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bestDaysRow}>
+              {bestTripDays.slice(0, 5).map((day, i) => {
+                const isTop = i === 0;
+                const scoreColor = day.score >= 80 ? '#16A34A' : day.score >= 55 ? '#D97706' : '#DC2626';
+                return (
+                  <View key={day.dateISO} style={[styles.bestDayCard, isTop && styles.bestDayCardTop]}>
+                    {isTop && (
+                      <View style={styles.bestDayBestBadge}>
+                        <Text style={styles.bestDayBestText}>BEST</Text>
+                      </View>
+                    )}
+                    <Text style={[styles.bestDayLabel, isTop && { color: '#fff' }]}>{day.label}</Text>
+                    <View style={styles.bestDayScoreRow}>
+                      <Text style={[styles.bestDayScore, { color: isTop ? '#fff' : scoreColor }]}>{day.score}</Text>
+                      <Text style={[styles.bestDayScoreUnit, isTop && { color: 'rgba(255,255,255,0.7)' }]}>/100</Text>
+                    </View>
+                    <Text style={[styles.bestDayDesc, isTop && { color: 'rgba(255,255,255,0.85)' }]} numberOfLines={2}>{day.description}</Text>
+                    <View style={styles.bestDayMetaRow}>
+                      <Ionicons name="thermometer-outline" size={11} color={isTop ? 'rgba(255,255,255,0.75)' : ranaColors.textSecondary} />
+                      <Text style={[styles.bestDayMeta, isTop && { color: 'rgba(255,255,255,0.75)' }]}>{day.minTemp}–{day.maxTemp}°C</Text>
+                      <Ionicons name="rainy-outline" size={11} color={isTop ? 'rgba(255,255,255,0.75)' : ranaColors.textSecondary} style={{ marginLeft: 6 }} />
+                      <Text style={[styles.bestDayMeta, isTop && { color: 'rgba(255,255,255,0.75)' }]}>{Math.round(day.pop * 100)}%</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        ) : null}
+
         <View style={styles.card}>
           <Text style={styles.roleText}>{context.role}</Text>
           <Text style={styles.question}>{context.quickQuestion}</Text>
@@ -86,7 +157,7 @@ export default function AssistantScreen() {
 
         <Text style={styles.sectionTitle}>Try one</Text>
         <View style={styles.chipsWrap}>
-          {context.chips.map((chip) => (
+          {(activeSection === 'explore' ? exploreChips : context.chips).map((chip) => (
             <TouchableOpacity
               key={chip}
               style={styles.chip}
@@ -201,5 +272,147 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  weatherBubble: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: '#EEF5FF',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#C8DEFF',
+  },
+  weatherBubbleIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...ranaShadow.soft,
+    flexShrink: 0,
+  },
+  weatherBubbleBody: {
+    flex: 1,
+  },
+  weatherBubbleCity: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: ranaColors.primary,
+    marginBottom: 2,
+  },
+  weatherBubbleText: {
+    fontSize: 13,
+    color: ranaColors.textPrimary,
+    lineHeight: 19,
+    fontWeight: '500',
+  },
+  alertBubble: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+  },
+  alertText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#92400E',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+
+  // ── Best Days to Travel ──────────────────────────────────────────────────
+  bestDaysSection: {
+    marginBottom: 20,
+  },
+  bestDaysHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  bestDaysTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: ranaColors.textPrimary,
+    marginLeft: 6,
+  },
+  bestDaysSubtitle: {
+    fontSize: 13,
+    color: ranaColors.textSecondary,
+    fontWeight: '500',
+  },
+  bestDaysRow: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  bestDayCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    minWidth: 110,
+    borderWidth: 1,
+    borderColor: '#EEF3FF',
+  },
+  bestDayCardTop: {
+    backgroundColor: '#1B2B59',
+    borderColor: '#1B2B59',
+  },
+  bestDayBestBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    marginBottom: 6,
+  },
+  bestDayBestText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 1,
+  },
+  bestDayLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: ranaColors.textPrimary,
+    marginBottom: 6,
+  },
+  bestDayScoreRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
+    marginBottom: 4,
+  },
+  bestDayScore: {
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  bestDayScoreUnit: {
+    fontSize: 11,
+    color: ranaColors.textSecondary,
+    fontWeight: '600',
+  },
+  bestDayDesc: {
+    fontSize: 10,
+    color: ranaColors.textSecondary,
+    lineHeight: 15,
+    marginBottom: 6,
+  },
+  bestDayMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  bestDayMeta: {
+    fontSize: 10,
+    color: ranaColors.textSecondary,
+    fontWeight: '600',
   },
 });

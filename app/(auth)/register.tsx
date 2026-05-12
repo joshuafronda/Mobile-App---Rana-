@@ -1,230 +1,321 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
-  View,
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
+  View,
 } from 'react-native';
-import { router } from 'expo-router';
+
+import { ranaColors, ranaRadius, ranaSpacing } from '@/src/theme/ranaTheme';
 
 const Register = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRegister = () => {
-    if (!fullName || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    if (!email.includes('@')) {
-      Alert.alert('Error', 'Please enter a valid email');
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
     setLoading(true);
-    // Simulate API call
     setTimeout(() => {
       setLoading(false);
-      Alert.alert('Success', `Account created for ${fullName}!`, [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Reset fields and navigate to login
-            setFullName('');
-            setEmail('');
-            setPassword('');
-            setConfirmPassword('');
-            router.push('/login');
-          },
-        },
-      ]);
+      router.replace('/(tabs)/explore');
     }, 1500);
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <LinearGradient
+      colors={[ranaColors.backgroundTop, ranaColors.backgroundBottom]}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join us today</Text>
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          {/* Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Create Account</Text>
+            <Text style={styles.cardSubtitle}>Join the RANA travel community</Text>
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your full name"
-              placeholderTextColor="#999"
-              value={fullName}
-              onChangeText={setFullName}
-              editable={!loading}
-            />
+            {/* Full Name */}
+            <View style={styles.inputWrap}>
+              <View style={styles.inputIconWrap}>
+                <Ionicons name="person-outline" size={18} color={ranaColors.muted} />
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Full name"
+                placeholderTextColor={ranaColors.muted}
+                value={fullName}
+                onChangeText={setFullName}
+                editable={!loading}
+              />
+            </View>
+
+            {/* Email */}
+            <View style={styles.inputWrap}>
+              <View style={styles.inputIconWrap}>
+                <Ionicons name="mail-outline" size={18} color={ranaColors.muted} />
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Email address"
+                placeholderTextColor={ranaColors.muted}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                editable={!loading}
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* Password */}
+            <View style={styles.inputWrap}>
+              <View style={styles.inputIconWrap}>
+                <Ionicons name="lock-closed-outline" size={18} color={ranaColors.muted} />
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Password (6+ characters)"
+                placeholderTextColor={ranaColors.muted}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                style={styles.eyeBtn}
+                onPress={() => setShowPassword(v => !v)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color={ranaColors.muted}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Confirm Password */}
+            <View style={styles.inputWrap}>
+              <View style={styles.inputIconWrap}>
+                <Ionicons name="shield-checkmark-outline" size={18} color={ranaColors.muted} />
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm password"
+                placeholderTextColor={ranaColors.muted}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirm}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                style={styles.eyeBtn}
+                onPress={() => setShowConfirm(v => !v)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={showConfirm ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color={ranaColors.muted}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Register Button */}
+            <TouchableOpacity
+              style={[styles.registerBtn, loading && styles.registerBtnDisabled]}
+              onPress={handleRegister}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="person-add-outline" size={18} color="#FFFFFF" />
+                  <Text style={styles.registerBtnText}>Create Account</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or sign up with</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Social Signup */}
+            <View style={styles.socialRow}>
+              <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
+                <Ionicons name="logo-google" size={20} color="#EA4335" />
+                <Text style={styles.socialBtnText}>Google</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
+                <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+                <Text style={styles.socialBtnText}>Facebook</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              placeholderTextColor="#999"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              editable={!loading}
-              autoCapitalize="none"
-            />
+          {/* Footer */}
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => router.push('/login')}>
+              <Text style={styles.footerLink}>Sign In</Text>
+            </TouchableOpacity>
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="At least 6 characters"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={true}
-              editable={!loading}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Confirm Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Re-enter your password"
-              placeholderTextColor="#999"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={true}
-              editable={!loading}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.registerButtonText}>Sign Up</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.push('/login')}>
-            <Text style={styles.linkText}>Login</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 40,
+    paddingHorizontal: ranaSpacing.lg,
+    paddingVertical: 32,
   },
-  header: {
-    marginBottom: 40,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: ranaRadius.xl,
+    padding: ranaSpacing.lg,
+    marginBottom: ranaSpacing.lg,
+    elevation: 3,
+    shadowColor: ranaColors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: ranaColors.textPrimary,
+    marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
+  cardSubtitle: {
+    fontSize: 13,
+    color: ranaColors.textSecondary,
+    marginBottom: ranaSpacing.lg,
   },
-  form: {
-    marginBottom: 20,
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F8FF',
+    borderRadius: ranaRadius.md,
+    borderWidth: 1,
+    borderColor: '#E8EEF9',
+    marginBottom: ranaSpacing.md,
+    height: 48,
+    paddingRight: 4,
   },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+  inputIconWrap: {
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#1a1a1a',
-    backgroundColor: '#fff',
+    flex: 1,
+    fontSize: 14,
+    color: ranaColors.textPrimary,
+    paddingVertical: 0,
+    height: '100%',
   },
-  registerButton: {
-    backgroundColor: '#34C759',
-    borderRadius: 8,
-    paddingVertical: 14,
+  eyeBtn: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
-    marginTop: 20,
-    minHeight: 50,
     justifyContent: 'center',
+    borderRadius: ranaRadius.sm,
   },
-  registerButtonDisabled: {
-    backgroundColor: '#B0B0B0',
+  registerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: ranaColors.primary,
+    borderRadius: ranaRadius.pill,
+    paddingVertical: 14,
+    minHeight: 50,
+    marginTop: ranaSpacing.sm,
   },
-  registerButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  registerBtnDisabled: {
+    backgroundColor: ranaColors.muted,
+  },
+  registerBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: ranaSpacing.lg,
+    gap: ranaSpacing.sm,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E8EEF9',
+  },
+  dividerText: {
+    fontSize: 12,
+    color: ranaColors.muted,
+    fontWeight: '500',
+  },
+  socialRow: {
+    flexDirection: 'row',
+    gap: ranaSpacing.md,
+  },
+  socialBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8EEF9',
+    borderRadius: ranaRadius.md,
+    paddingVertical: 12,
+    minHeight: 48,
+  },
+  socialBtnText: {
+    fontSize: 13,
     fontWeight: '600',
+    color: ranaColors.textPrimary,
   },
-  footer: {
+  footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: ranaSpacing.md,
   },
   footerText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: ranaColors.textSecondary,
   },
-  linkText: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '600',
+  footerLink: {
+    fontSize: 13,
+    color: ranaColors.primary,
+    fontWeight: '700',
   },
 });
 
